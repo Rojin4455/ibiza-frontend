@@ -4,6 +4,7 @@ import { User, MapPin, Euro, Home, Phone, Mail, Calendar, Clock, Bed, Bath } fro
 const UserProfileSummary = ({ user }) => {
   if (!user) return null;
 
+
   const formatPrice = (price) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',

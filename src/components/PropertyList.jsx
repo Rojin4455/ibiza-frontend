@@ -77,6 +77,34 @@ const PropertyList = () => {
     setFilters(newFilters);
   };
 
+  const onSearch = async (searchVal, reset = true) => {
+    console.log("search val: ", searchVal)
+    if (!searchVal || searchVal.trim() === "") {
+        setFilters(null)
+        return
+      }
+
+    if (loading) return;
+    dispatch(setLoading(true));
+    try {
+      
+    const requestUrl = `accounts/fetch-properties/?search=${[searchVal]}`;
+      const response = await axiosInstance.get(requestUrl);
+      const data = response.data;
+
+      if (reset) {
+        console.log("data: ", data)
+        dispatch(setProperties(data));
+      } else {
+        dispatch(addMoreProperties(data));
+      }
+    } catch (err) {
+      console.error("Error fetching properties:", err);
+    } finally {
+      dispatch(setLoading(false));
+    }
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
@@ -84,7 +112,7 @@ const PropertyList = () => {
         <div className="text-gray-600">Showing {properties.length} of {totalCount} properties</div>
       </div>
 
-      <SearchAndFilter onFilterChange={handleFilterChange} />
+      <SearchAndFilter onFilterChange={handleFilterChange} onSearch={onSearch}/>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {properties.map((property, index) => (

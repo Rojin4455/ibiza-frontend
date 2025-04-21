@@ -41,7 +41,7 @@ const PropertyCard = ({ property }) => {
   <div className="p-5">
     <div className="flex justify-between items-center mb-2">
       <p className="text-xl font-semibold text-primaryhover">
-        €{parseFloat(property.price).toLocaleString()}  
+        {property.price? "€"+parseFloat(property.price).toLocaleString(): "Price Not Provided"}  
       </p>
       <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide">
         {property.reference}
@@ -52,7 +52,6 @@ const PropertyCard = ({ property }) => {
       <MapPin size={16} className="mr-1 text-slate-400" />
       {property.town}, {property.province}
     </p>
-
     <div className="flex justify-between text-sm text-slate-600 mb-4">
       <span className="flex items-center gap-1">
         <Bed size={16} className="text-primary" />

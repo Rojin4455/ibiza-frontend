@@ -52,7 +52,7 @@ useEffect(()=> {
   })();
 
   const handleViewUser = async (user) => {
-    navigate('/user-properties',{ state: { user } })
+    navigate(`/user-properties/${user.id}`)
   }
 
   // Filter users based on search
@@ -84,7 +84,7 @@ const usersLastWeek = users.filter(user => new Date(user.date_added) >= oneWeekA
                 <Users className="h-6 w-6 text-blue-600" />
               </div>
               <div className="ml-4">
-                <h2 className="text-sm font-medium text-gray-500">Total Users</h2>
+                <h2 className="text-sm font-medium text-gray-500">Total Leads</h2>
                 <p className="text-2xl font-bold text-gray-800">{users.length}</p>
               </div>
             </div>
@@ -142,7 +142,7 @@ const usersLastWeek = users.filter(user => new Date(user.date_added) >= oneWeekA
         <div className="bg-white rounded-lg shadow overflow-hidden">
           <div className="p-6 border-b border-gray-200">
             <div className="flex justify-between items-center">
-              <h2 className="text-lg font-medium text-gray-800">Users</h2>
+              <h2 className="text-lg font-medium text-gray-800">Leads Who Have Match</h2>
               <div className="relative">
                 <input
                   type="text"
@@ -156,69 +156,66 @@ const usersLastWeek = users.filter(user => new Date(user.date_added) >= oneWeekA
             </div>
           </div>
           
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Name
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Email
-                  </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Join Date
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-  {filteredUsers.length > 0 ? (
-    filteredUsers.map((user) => (
-      <tr
-        key={user.id}
-        className="hover:bg-gray-50 transition-colors duration-200"
-      >
-        <td className="px-6 py-4 whitespace-nowrap">
-          <div className="font-semibold text-gray-900 capitalize">{user.first_name}</div>
-        </td>
-
-        <td className="px-6 py-4 whitespace-nowrap">
-          <div className="text-gray-600 italic">
-            {user.email ? user.email : "No Email Provided"}
-          </div>
-        </td>
-
-        <td className="px-6 py-4 whitespace-nowrap">
-          <div className="text-gray-500">
-            {new Date(user.date_added).toLocaleDateString("en-US", {
-              year: "numeric",
-              month: "short",
-              day: "numeric",
-            })}
-          </div>
-        </td>
-
-        <td className="px-6 py-4 whitespace-nowrap text-right">
-          <button
-            onClick={() => handleViewUser(user)} // You can define this function
-            className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md text-white bg-primary hover:bg-primaryhover transition"
-          >
-            View Details
-          </button>
-        </td>
+          <div className="overflow-x-auto w-full">
+  <table className="min-w-[600px] w-full table-auto md:table-fixed divide-y divide-gray-200">
+    <thead className="bg-gray-50">
+      <tr>
+        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+          Name
+        </th>
+        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+          Email
+        </th>
+        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+          Join Date
+        </th>
+        <th className="px-4 py-3"></th>
       </tr>
-    ))
-  ) : (
-    <tr>
-      <td colSpan="4" className="px-6 py-4 text-center text-gray-500">
-        No users found
-      </td>
-    </tr>
-  )}
-</tbody>
+    </thead>
 
-            </table>
-          </div>
+    <tbody className="bg-white divide-y divide-gray-200">
+      {filteredUsers.length > 0 ? (
+        filteredUsers.map((user) => (
+          <tr
+            key={user.id}
+            className="hover:bg-gray-50 transition-colors duration-200"
+          >
+            <td className="px-4 py-4 whitespace-normal break-words">
+              <div className="font-semibold text-gray-900 capitalize">{user.first_name}</div>
+            </td>
+            <td className="px-4 py-4 whitespace-normal break-words">
+              <div className="text-gray-600 italic">
+                {user.email ? user.email : "No Email Provided"}
+              </div>
+            </td>
+            <td className="px-4 py-4 whitespace-nowrap text-gray-500">
+              {new Date(user.date_added).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+              })}
+            </td>
+            <td className="px-4 py-4 whitespace-nowrap text-right">
+              <button
+                onClick={() => handleViewUser(user)}
+                className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md text-white bg-primary hover:bg-primaryhover transition"
+              >
+                View Details
+              </button>
+            </td>
+          </tr>
+        ))
+      ) : (
+        <tr>
+          <td colSpan="4" className="px-4 py-4 text-center text-gray-500">
+            No users found
+          </td>
+        </tr>
+      )}
+    </tbody>
+  </table>
+</div>
+
           
           {/* Pagination could be added here */}
           <div className="bg-gray-50 px-6 py-3 flex justify-between items-center">

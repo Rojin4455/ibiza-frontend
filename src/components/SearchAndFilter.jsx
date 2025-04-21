@@ -7,6 +7,8 @@ const SearchAndFilter = ({ onFilterChange, onSearch }) => {
   const [locationSearch, setLocationSearch] = useState('');
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
   const [selectedLocations, setSelectedLocations] = useState([]);
+  const [inputVal, setInputVal] = useState('');
+
 
   const locationRef = useRef(null);
   
@@ -113,8 +115,18 @@ const SearchAndFilter = ({ onFilterChange, onSearch }) => {
     });
   };
 
+  useEffect(() => {
+    const delayDebounce = setTimeout(() => {
+      if (inputVal.trim().length > 2 || inputVal.trim() === "") {
+        onSearch(inputVal);  // Only call onSearch after 500ms
+      }
+    }, 500); // 500ms delay
+
+    return () => clearTimeout(delayDebounce); // Clear timeout on change
+  }, [inputVal]);
+
   const handleSearch = (e) => {
-    onSearch(e.target.value);
+    setInputVal(e.target.value);
   };
 
   const handleLocationToggle = (location) => {

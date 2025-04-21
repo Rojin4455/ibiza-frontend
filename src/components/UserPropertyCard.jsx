@@ -1,7 +1,7 @@
 import { Bath, Bed, MapPin } from 'lucide-react';
 import React, {useEffect, useState} from 'react'
 
-function UserPropertyCard({property, togglePropertySelection, isLastElement, lastPropertyElementRef, selectedProperties}) {
+function UserPropertyCard({property, togglePropertySelection, isLastElement, lastPropertyElementRef, selectedProperties, noSelect}) {
     const [hovered, setHovered] = useState(false);
     const [imageIndex, setImageIndex] = useState(0);
   
@@ -43,6 +43,7 @@ function UserPropertyCard({property, togglePropertySelection, isLastElement, las
               )}
     
               {/* Checkbox */}
+              {!noSelect && (
               <div className="absolute top-3 left-3 z-10">
                 <label className="inline-flex items-center">
                   <input
@@ -53,6 +54,7 @@ function UserPropertyCard({property, togglePropertySelection, isLastElement, las
                   />
                 </label>
               </div>
+              )}
     
               {/* Tags */}
               <div className="absolute top-3 left-10 bg-primary text-white text-xs font-semibold px-3 py-1 rounded-full shadow-sm">

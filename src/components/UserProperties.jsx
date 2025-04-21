@@ -9,14 +9,22 @@ import {
   clearProperties,
   setLoading,
 } from '../slices/propertySlice';
+import EmailSender from './EmailSender';
+import { useParams } from 'react-router-dom';
 
 function UserProperties({ user }) {
+
+    console.log("userrrereregfdwb gg123:C", user)
   const dispatch = useDispatch();
-  const { properties, totalCount, next, loading } = useSelector(state => state.properties);
+  const { properties, totalCount, next, loading, noSelect } = useSelector(state => state.properties);
   const [searchTerm, setSearchTerm] = useState('');
   const [message, setMessage] = useState('');
   const [selectedProperties, setSelectedProperties] = useState([]);
   const [selectOpen, setSelectOpen] = useState(null);
+  const queryParams = new URLSearchParams(window.location.search);
+  const selection = queryParams.get("selection") ?? "false";
+  const isSelection = selection === "True"; // this will be `true` if selection is 'true', otherwise false
+  console.log("selectionnnnn", isSelection)
 
   const observer = useRef();
   const lastPropertyElementRef = useCallback(node => {
@@ -32,6 +40,9 @@ function UserProperties({ user }) {
   
     if (node) observer.current.observe(node);
   }, [loading, next]);
+
+
+
 
   const buildQueryParams = (userObj) => {
     const params = new URLSearchParams();
@@ -59,13 +70,17 @@ function UserProperties({ user }) {
     dispatch(setLoading(true));
   
     try {
+        if (isSelection){
+            url = `accounts/contacts/${user.id}?selection=true`;
+        }
       const params = user ? buildQueryParams(user) : new URLSearchParams();
       if (searchTerm) params.append('search', searchTerm);
-      
+      console.log("user obj: ", params.toString())
       const requestUrl = url ? url : `accounts/properties/?${params.toString()}`;
       const response = await axiosInstance.get(requestUrl);
       const data = response.data;
-  
+      console.log("data data data",data)
+
       if (reset) {
         dispatch(setProperties(data));
         // Reset selected properties when fetching new list
@@ -83,11 +98,11 @@ function UserProperties({ user }) {
   useEffect(() => {
     const timer = setTimeout(() => {
       dispatch(clearProperties());
-      fetchProperties(null, true);  // Reset to page 1
+      fetchProperties(null, true);
     }, 500);
   
     return () => clearTimeout(timer);
-  }, [searchTerm, user]);
+  }, [searchTerm]);
 
   const handleScroll = () => {
     if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 100 && next && !loading) {
@@ -143,8 +158,8 @@ function UserProperties({ user }) {
   };
 
   return (
-    <div className="flex flex-col h-full bg-gray-50 p-4">
-      <h2 className="text-xl font-bold mb-4">Properties for {user?.name || 'Selected User'}</h2>
+    <div className="flex flex-col h-ful p-4">
+      <h2 className="text-xl font-bold mb-4">Properties for {user?.first_name || 'Selected User'}</h2>
       
       {/* Search Bar */}
       {/* <div className="mb-4 relative">
@@ -161,7 +176,7 @@ function UserProperties({ user }) {
       </div> */}
       
       {/* Message Form */}
-      <form onSubmit={handleSendMessage} className="mb-4 flex">
+      {/* <form onSubmit={handleSendMessage} className="mb-4 flex">
         <input
           type="text"
           placeholder="Type your message..."
@@ -176,7 +191,10 @@ function UserProperties({ user }) {
           <Send className="h-4 w-4 mr-2" />
           Send
         </button>
-      </form>
+      </form> */}
+        {!noSelect && !loading &&(
+      <EmailSender selectedProperties={selectedProperties} userId={user.id}/>
+    )}
       
       {/* Properties List with Selection */}
       <div className="flex justify-between items-center mb-2">
@@ -205,6 +223,7 @@ function UserProperties({ user }) {
                     togglePropertySelection={togglePropertySelection}
                     selectedProperties={selectedProperties}
                     lastPropertyElementRef={isLastElement ? lastPropertyElementRef : null}
+                    noSelect={noSelect}
                   />
                 );
               })}

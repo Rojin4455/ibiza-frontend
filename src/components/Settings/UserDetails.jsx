@@ -1,13 +1,10 @@
 import React, { useRef } from 'react';
 import { FaUserCircle, FaCamera } from 'react-icons/fa';
+import { useSelector } from 'react-redux';
 
 function UserDetails() {
-    // Static data for the user profile
-    const user = {
-        username: 'John Doe',
-        email: 'johndoe@example.com',
-        phone: '+1234567890',
-    };
+
+    const {user} = useSelector((state) => state.user)
 
     const fileInputRef = useRef(null);
 

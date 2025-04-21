@@ -5,11 +5,15 @@ import LogoutModal from '../components/Settings/LogoutModal';
 import Content from '../components/Settings/Content';
 import axiosInstance from '../axios/axiosInstance';
 import axios from 'axios';
+import { useDispatch } from 'react-redux';
+import { clearUser } from '../slices/UserSlice';
+import { toast } from 'sonner';
 
 function SettingsPage() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [urlInput, setUrlInput] = useState('');
   const [urls, setUrls] = useState([]);
+  const dispatch = useDispatch()
 
   useEffect(() => {
 
@@ -55,11 +59,27 @@ function SettingsPage() {
     setUrls(urls.filter(url => url.id !== idToRemove));
   };
 
-  const handleLogout = () => {
-    // Implement actual logout logic here
-    console.log('User logged out');
-    setShowLogoutModal(false);
-  };
+  const handleLogout = async () => {
+    try {
+        // Use withCredentials to ensure cookies are sent
+        const response = await axiosInstance.post('auth/logout/', {}, { 
+            withCredentials: true 
+        });
+        
+        if (response.status === 200) {
+            console.log("Logout successful: ", response);
+            dispatch(clearUser());
+            toast.success("Logged out successfully");
+        }
+    } catch (error) {
+        console.error("Logout failed: ", error);
+        // Even if the server logout fails, clear the local state
+        dispatch(clearUser());
+        toast.warning("Logged out locally, but server session may still exist");
+    } finally {
+        setShowLogoutModal(false);
+    }
+};
 
   return (
     <div className="min-h-screen bg-gray-50">
