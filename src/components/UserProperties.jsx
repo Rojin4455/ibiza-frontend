@@ -197,6 +197,7 @@ function UserProperties({ user }) {
     )}
       
       {/* Properties List with Selection */}
+      {!isSelection && (
       <div className="flex justify-between items-center mb-2">
         <span className="font-medium">Property List</span>
         <div className="flex items-center gap-4">
@@ -209,6 +210,7 @@ function UserProperties({ user }) {
           </button>
         </div>
       </div>
+      )}
       
       <div className="bg-white rounded-lg shadow overflow-hidden flex-grow">
         <div className="overflow-y-auto h-full">

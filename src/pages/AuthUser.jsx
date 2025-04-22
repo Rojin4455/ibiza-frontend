@@ -92,10 +92,12 @@ export default function AuthPages() {
           
           {/* Logo and title */}
           <div className="flex flex-col items-center space-y-3">
-            <div className="bg-orange-100 p-4 rounded-full">
-              <Building2 className="w-8 h-8 text-secondary" />
+            <div className="p-2 rounded-full">
+            <img src="https://msgsndr-private.storage.googleapis.com/companyPhotos/399c65a9-7382-44b4-b8eb-8632ba9d5e7a.png" alt="Logo" className="w-full h-12" />
+
+              {/* <Building2 className="w-8 h-8 text-secondary" /> */}
             </div>
-            <h1 className="text-2xl font-bold text-gray-800">Ibizaluxury Portal</h1>
+            <h1 className="text-xl font-bold text-gray-800">CloudQonnect Portal</h1>
             <p className="text-gray-600 text-center">
               {isLogin ? 'Welcome back! Please login to your account.' : 'Create an account to get started'}
             </p>
@@ -182,7 +184,7 @@ export default function AuthPages() {
         />
       )}
 
-            {isLogin && <Signin />}
+            {/* {isLogin && <Signin />} */}
 
             <button
               type="submit"
@@ -192,7 +194,7 @@ export default function AuthPages() {
             </button>
           </form>
 
-          <div className="mt-6">
+          {/* <div className="mt-6">
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-gray-300"></div>
@@ -212,7 +214,7 @@ export default function AuthPages() {
                 {isLogin ? 'Create an account' : 'Sign in instead'}
               </button>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

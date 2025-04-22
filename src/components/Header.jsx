@@ -17,7 +17,7 @@ function Header({ activeTab }) {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex items-center">
-            <img src="/favicon.ico" alt="Logo" className="w-10 h-10" />
+            <img src="https://msgsndr-private.storage.googleapis.com/companyPhotos/399c65a9-7382-44b4-b8eb-8632ba9d5e7a.png" alt="Logo" className="w-full h-10" />
           </div>
 
           {/* Desktop Menu */}
