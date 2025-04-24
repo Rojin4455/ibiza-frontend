@@ -15,7 +15,7 @@ axiosInstance.interceptors.request.use(
     
     if (token) {
       // Use Token format instead of Bearer since you're using token authentication
-      config.headers.Authorization = `Token ${token}`;
+      config.headers.Authorization = `Bearer ${token}`;
     }
     
     return config;
@@ -51,7 +51,7 @@ axiosInstance.interceptors.response.use(
         const newAccessToken = refreshResponse.data.access;
 
         // Set new token to Redux store
-        store.dispatch(setUser({ accessToken: newAccessToken }));
+        store.dispatch(setUser({ accessToken: newAccessToken, isAdmin:true}));
 
         // Update Authorization header and retry original request
         originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;

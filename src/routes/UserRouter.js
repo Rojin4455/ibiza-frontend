@@ -14,6 +14,7 @@ function UserRouter() {
   return (
     <Routes>
         <Route path='/' element={<UserProtectedRouter><DashboardPage/></UserProtectedRouter>} />
+        <Route path='/location/:id' element={<UserProtectedRouter><DashboardPage/></UserProtectedRouter>} />
         <Route path='/properties' element={<UserProtectedRouter><UserPropertyPage/></UserProtectedRouter>} />
         {selection === "True" ? (
         <Route path='/user-properties/:id' element={<UserDetailsPage selection={true}/>} />

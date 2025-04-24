@@ -17,7 +17,7 @@ export const userSlice = createSlice({
         state.accessToken = accessToken;
         state.refreshToken = refreshToken;
         state.isAdmin = isAdmin;
-        state.user = user
+        state.user = user?user:state.user
       },
       clearUser: (state, action) => {
         state.accessToken = "";

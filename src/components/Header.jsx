@@ -1,10 +1,20 @@
 import React, { useState } from 'react';
 import { Home, Settings, MapPin, Menu, X } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useAccessControl } from '../customHooks/useAccessControl';
 
 function Header({ activeTab }) {
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+
+  const { isFullAccess, isRestricted, locationId: accessLocationId } = useAccessControl();
+  const [searchParams] = useSearchParams();
+
+  // Determine the locationId from access control or fallback to URL param
+  const locationId = accessLocationId || searchParams.get('locationId');
+  console.log("is header full access: ", isFullAccess)
+  console.log("is headerlocationId access: ", locationId)
+  console.log("is header isRestricted access: ", isRestricted)
 
   const handleNavigate = (path) => {
     setMenuOpen(false); // Close menu on nav
@@ -26,20 +36,22 @@ function Header({ activeTab }) {
               icon={<Home size={20} />}
               label="Dashboard"
               active={activeTab === 'dashboard'}
-              onClick={() => handleNavigate('/')}
+              onClick={() => handleNavigate(`/?locationId=${locationId}`)}
             />
             <NavItem
               icon={<MapPin size={20} />}
               label="All Properties"
               active={activeTab === 'properties'}
-              onClick={() => handleNavigate('/properties')}
+              onClick={() => handleNavigate(`/properties?locationId=${locationId}`)}
             />
+            {isFullAccess &&(
             <NavItem
               icon={<Settings size={20} />}
               label="Settings"
               active={activeTab === 'settings'}
-              onClick={() => handleNavigate('/settings')}
+              onClick={() => handleNavigate(`/settings?locationId=${locationId}`)}
             />
+          )}
           </nav>
 
           {/* Mobile Toggle Button */}
@@ -58,23 +70,25 @@ function Header({ activeTab }) {
               icon={<Home size={20} />}
               label="Dashboard"
               active={activeTab === 'dashboard'}
-              onClick={() => handleNavigate('/')}
+              onClick={() => handleNavigate(`/?locationId=${locationId}`)}
               mobile
             />
             <NavItem
               icon={<MapPin size={20} />}
               label="All Properties"
               active={activeTab === 'properties'}
-              onClick={() => handleNavigate('/properties')}
+              onClick={() => handleNavigate(`/properties?locationId=${locationId}`)}
               mobile
             />
+            {isFullAccess &&(
             <NavItem
               icon={<Settings size={20} />}
               label="Settings"
-              active={activeTab === 'settings'}
-              onClick={() => handleNavigate('/settings')}
+              active={activeTab === `settings`}
+              onClick={() => handleNavigate(`/settings?locationId=${locationId}`)}
               mobile
             />
+            )}
           </div>
         )}
       </div>

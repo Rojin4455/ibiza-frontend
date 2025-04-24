@@ -6,7 +6,7 @@ import Signin from '../components/AuthUser/Signin';
 import axiosInstance from '../axios/axiosInstance';
 import { useDispatch } from 'react-redux';
 import { setUser } from '../slices/UserSlice';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 
@@ -14,8 +14,13 @@ export default function AuthPages() {
   const [showPassword, setShowPassword] = useState(false);
   const [showPassword2, setShowPassword2] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
+  const [loading, setLoading] = useState(false);
+
   const dispatch = useDispatch()
   const navigate = useNavigate()
+
+  // const [searchParams] = useSearchParams();
+  // const locationId = searchParams.get('locationId');
   
   const { register, handleSubmit, formState: { errors }, watch, reset } = useForm({
     defaultValues: {
@@ -36,40 +41,38 @@ export default function AuthPages() {
   };
   
 
-  const handleLogin = async (data) => {
-    try{
-        const response = await axiosInstance.post('auth/login/',{
-            username:data.email,
-            password:data.password
-        },{ 
-          withCredentials: true
-      })
-        if(response.status === 200){
-            console.log("success response", response)
-            let isAdmin = false
-            console.log(response.data.user.email)
-            if(response.data.user.email === 'dennis@gmail.com'){
-                isAdmin = true
-            }else{
-                isAdmin = false
-            }
-            dispatch(setUser({accessToken:response.data.access, isAdmin:isAdmin, user:response.data.user}))
-            toast.success("successfully login")
-            navigate('/')
 
 
-        }else{
-            console.error("error response: ", response)
-            toast.error("something went wrong")
+const handleLogin = async (data) => {
+  setLoading(true);
+  try {
+    const response = await axiosInstance.post(
+      'auth/login/',
+      {
+        username: data.email,
+        password: data.password,
+      },
+      {
+        withCredentials: true,
+      }
+    );
 
-        }
-
-    }catch(error){
-        console.error("error", error)
-        toast.error("something went wrong")
-
+    if (response.status === 200) {
+      let isAdmin = response.data.user.email === 'dennis@gmail.com';
+      dispatch(setUser({ accessToken: response.data.access, isAdmin, user: response.data.user }));
+      toast.success('Successfully logged in');
+      navigate(`/?locationId=ttQIDuvyngILWMJ5wABA`);
+    } else {
+      toast.error('Something went wrong');
     }
+  } catch (error) {
+    console.error('Login error:', error);
+    toast.error('Something went wrong');
+  } finally {
+    setLoading(false);
   }
+};
+
 
   const handleSignup = async (data) => {
     
@@ -185,13 +188,14 @@ export default function AuthPages() {
       )}
 
             {/* {isLogin && <Signin />} */}
-
             <button
-              type="submit"
-              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary hover:bg-primaryhover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors duration-200"
-            >
-              {isLogin ? 'Sign in' : 'Create Account'}
-            </button>
+            type="submit"
+            className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary hover:bg-primaryhover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={loading}
+          >
+            {loading ? 'Loading...' : isLogin ? 'Sign in' : 'Create Account'}
+          </button>
+
           </form>
 
           {/* <div className="mt-6">

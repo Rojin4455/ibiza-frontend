@@ -1,31 +1,76 @@
 import { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Users, UserPlus, Activity, Search } from 'lucide-react';
+import { Users, UserPlus, Activity, Search, Settings } from 'lucide-react';
 import axiosInstance from '../axios/axiosInstance';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useAccessControl } from '../customHooks/useAccessControl';
+
 
 export default function Dashboard() {
   // Sample data - replace with your actual data
   const [users, setUsers] = useState([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  const { isFullAccess, isRestricted, locationId: accessLocationId } = useAccessControl();
+  const [searchParams] = useSearchParams();
+  const [subAccounts, setSubAccounts] = useState([])
+
+  // Determine the locationId from access control or fallback to URL param
+  const locationId = accessLocationId || searchParams.get('locationId');
+  console.log("is full access: ", isFullAccess)
+  console.log("is locationId access: ", locationId)
+  console.log("is isRestricted access: ", isRestricted)
+  // const [subAccounts, setSubAccounts] = useState([])
+
+
+  const [selectedAccount, setSelectedAccount] = useState(null);
+
   const navigate = useNavigate()
 
   const [searchTerm, setSearchTerm] = useState('');
 
-  
-useEffect(()=> {
-    const fetchContacts = async () => {
-        try{
-            const response = await axiosInstance.get("accounts/contacts/")
-            if(response.status === 200){
-                console.log("response: ", response.data)
-                setUsers(response.data)
-            }else{
-                console.error("error response: ", response)
-            }
-        }catch(error){
-            console.error("something went wrong: ", error)
-        }
+  useEffect(() => {
+    fetchContacts()
+  },[locationId])
+
+  useEffect(() => {
+    // Find and set the default selected account based on locationId
+    const defaultAccount = subAccounts.find(account => 
+      account.locationId === locationId
+    );
+    
+    if (defaultAccount) {
+      setSelectedAccount(defaultAccount);
     }
+  }, []);
+
+  const toggleDropdown = () => {
+    setShowDropdown(!showDropdown);
+  };
+
+  const handleSelectAccount = (account) => {
+    setSelectedAccount(account);
+    setShowDropdown(false);
+    navigate(`/?locationId=${account.LocationId}`)
+  };
+
+
+  const fetchContacts = async () => {
+    try{
+        const response = await axiosInstance.get(`accounts/contacts/?location_id=${locationId}`)
+        if(response.status === 200){
+            console.log("response: ", response.data)
+            setUsers(response.data)
+        }else{
+            console.error("error response: ", response)
+        }
+    }catch(error){
+        console.error("something went wrong: ", error)
+    }
+}
+
+useEffect(()=> {
+
     fetchContacts()
 },[])
   
@@ -71,11 +116,89 @@ const usersLastWeek = users.filter(user => new Date(user.date_added) >= oneWeekA
   ? ((users.length / usersLastWeek.length) * 100).toFixed(1) 
   : 0;
 
+
+  // useEffect(() => {
+  //   const fetchCompanyNames = async () => {
+  //     try{
+  //     const response = await axiosInstance.get('accounts/get-company-names/')
+  //     if(response.status === 200){
+  //       console.log("response ;", response)
+  //       setSubAccounts(response.data)
+  //     }else{
+  //       console.error("error response", response)
+  //     }
+  //   }catch(error){
+  //     console.error("somethiong went wrong: ", error)
+  //   }
+  //   }
+  //   fetchCompanyNames()
+  // },[])
+  // Example sub-accounts data
+
+  // const subAccounts = [
+  //   { companyId: 'abc123', company_name: 'Location 1', locationId: 'loc123' },
+  //   { companyId: 'def456', company_name: 'Location 2', locationId: 'ttQIDuvyngILWMJ5wABA' },
+  //   { companyId: 'ghi789', company_name: 'Location 3', locationId: 'loc789' }
+  // ];
+
+  useEffect(() => {
+
+    const fetch_subaccounts = async () => {
+      try{
+      const response = await axiosInstance.get('accounts/fetch-accounts/')
+      if(response.status === 200){
+        setSubAccounts(response.data.sub_accounts)
+        setSelectedAccount(response.data.sub_accounts[0])
+      }else{
+        console.error("error response")
+      }
+    }catch(error){
+      console.error("something went wrong: ", error)
+    }
+    }
+    if(!isRestricted){
+    fetch_subaccounts()
+    }
+  },[])
+
+
   return (
     <div className="bg-gray-50 min-h-screen">
       <div className="container mx-auto px-4 py-6">
-        <h1 className="text-2xl font-bold text-gray-800 mb-6">Dashboard</h1>
-        
+      <div className="flex justify-between items-center">
+      <h1 className="text-2xl font-bold text-gray-800 mb-6">Dashboard</h1>
+      
+      <div className="relative">
+        {!isRestricted && (
+      <button 
+        className="flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-md hover:bg-gray-200"
+        onClick={toggleDropdown}
+      >
+        <Users size={20} />
+        <span>{selectedAccount ? selectedAccount.company_name : 'Sub-accounts'}</span>
+      </button>
+      )}
+
+      
+      {showDropdown && !isRestricted && (
+        <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border border-gray-200">
+          <ul className="py-1">
+            {subAccounts.map((location) => (
+              <li 
+                key={location.companyId} 
+                className={`px-4 py-2 hover:bg-gray-100 cursor-pointer ${
+                  selectedAccount?.companyId === location.companyId ? 'bg-blue-100' : ''
+                }`}
+                onClick={() => handleSelectAccount(location)}
+              >
+                {location.company_name}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+    </div>        
         {/* Metrics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           <div className="bg-white rounded-lg shadow p-6">

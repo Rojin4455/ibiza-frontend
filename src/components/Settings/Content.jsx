@@ -1,12 +1,18 @@
 import React,{useState} from 'react'
 import UserDetails from './UserDetails'
 import axiosInstance from '../../axios/axiosInstance';
+import { RefreshCw } from "lucide-react";
+import { toast } from 'sonner';
+
 
 function Content({setShowLogoutModal, handleUrlSubmit, setUrlInput, urls, setUrls, urlInput, handleRemoveUrl}) {
 
     const [showModal, setShowModal] = useState(false);
     const [selectedUrlId, setSelectedUrlId] = useState(null);
     const [confirmText, setConfirmText] = useState('');
+    const [refreshingItems, setRefreshingItems] = useState({});
+
+
   
     const openModal = (id) => {
       setSelectedUrlId(id);
@@ -21,11 +27,16 @@ function Content({setShowLogoutModal, handleUrlSubmit, setUrlInput, urls, setUrl
             const response = await axiosInstance.delete(`accounts/xmlfeed/${selectedUrlId}/`)
             if(response.status === 204){
                 console.log("deleted successfully")
+                toast.success("Feed Deleted Successfully")
             }else{
                 console.error("error response: ", response)
+                toast.error("Something went wrong")
+
             }
         }catch(error){
             console.error("something went wrong", error)
+            toast.error("Something went wrong")
+
 
         }
 
@@ -52,13 +63,67 @@ function Content({setShowLogoutModal, handleUrlSubmit, setUrlInput, urls, setUrl
               )
             );
             console.log("Status updated: ", response);
+            toast.success("Status Updated Successfully")
+
           } else {
             console.error("Unexpected response: ", response);
+            toast.error("Something went wrong")
+
           }
         } catch (error) {
           console.error("Error while toggling status: ", error);
+          toast.error("Something went wrong")
+
         }
       };
+
+
+      const refreshUrl = async (id) => {
+        try {
+          console.log("xml id: ", id)
+          const response = await axiosInstance.get(`/accounts/refresh-feed/${id}/`);
+          if (response.status === 200){
+          console.log("Refresh success:", response.data);
+          toast.success("Feed Refreshed Successfully")
+
+          }else{
+            console.error("error response: ", response.data)
+            toast.error("Something went wrong")
+
+          }
+          // Optionally show a toast or reload the data
+        } catch (error) {
+          console.error("Error refreshing feed:", error.response?.data || error.message);
+          toast.error(`${error.message}`)
+
+          // Optionally show an error toast or message
+        }
+      };
+
+
+      const handleRefresh = async (id) => {
+        // Skip if this item is already refreshing
+        if (refreshingItems[id]) return;
+        
+        // Set this specific item as refreshing
+        setRefreshingItems(prev => ({ ...prev, [id]: true }));
+        
+        try {
+          // Your existing refresh function
+          await refreshUrl(id);
+        } catch (error) {
+          console.error("Error refreshing feed:", error);
+        } finally {
+          // Clear refreshing state for this item
+          setRefreshingItems(prev => {
+            const updated = { ...prev };
+            delete updated[id]; // Remove this item from refreshing state
+            return updated;
+          });
+        }
+      };
+    
+      
       
 
 
@@ -136,7 +201,7 @@ function Content({setShowLogoutModal, handleUrlSubmit, setUrlInput, urls, setUrl
   </h4>
   {urls.length > 0 ? (
     <ul className="divide-y divide-gray-200">
-      {urls.map((item) => (
+    {urls.map((item) => (
         <li key={item.id} className="py-3 flex justify-between items-center">
           <div className="flex-grow truncate mr-4">
             <a
@@ -172,6 +237,28 @@ function Content({setShowLogoutModal, handleUrlSubmit, setUrlInput, urls, setUrl
                 />
               </button>
             </div>
+            
+            {/* Row-specific refresh button */}
+            <button
+              onClick={() => handleRefresh(item.id)}
+              disabled={refreshingItems[item.id]}
+              className={`relative flex items-center justify-center p-2 rounded-full transition-all duration-300 
+                ${refreshingItems[item.id] 
+                  ? "bg-blue-100 text-blue-400 cursor-not-allowed" 
+                  : "text-blue-500 hover:text-blue-700 hover:bg-blue-50"}`}
+              title={refreshingItems[item.id] ? "Refreshing feed..." : "Refresh feed"}
+            >
+              <RefreshCw 
+                className={`w-5 h-5 ${refreshingItems[item.id] ? "animate-spin" : ""}`} 
+              />
+              
+              {refreshingItems[item.id] && (
+                <span className="absolute top-full mt-1 whitespace-nowrap text-xs font-medium text-blue-500">
+                  Refreshing...
+                </span>
+              )}
+            </button>
+            
             <button
               onClick={() => openModal(item.id)}
               className="text-red-500 hover:text-red-700 text-sm font-semibold"
@@ -181,7 +268,8 @@ function Content({setShowLogoutModal, handleUrlSubmit, setUrlInput, urls, setUrl
           </div>
         </li>
       ))}
-    </ul>
+  </ul>
+  
   ) : (
     <p className="text-gray-500 text-sm">You haven't added any URLs yet.</p>
   )}

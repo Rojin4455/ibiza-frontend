@@ -14,6 +14,8 @@ function SettingsPage() {
   const [urlInput, setUrlInput] = useState('');
   const [urls, setUrls] = useState([]);
   const dispatch = useDispatch()
+  const [loadingLogout, setLoadingLogout] = useState(false);
+
 
   useEffect(() => {
 
@@ -60,26 +62,27 @@ function SettingsPage() {
   };
 
   const handleLogout = async () => {
+    setLoadingLogout(true);
     try {
-        // Use withCredentials to ensure cookies are sent
-        const response = await axiosInstance.post('auth/logout/', {}, { 
-            withCredentials: true 
-        });
-        
-        if (response.status === 200) {
-            console.log("Logout successful: ", response);
-            dispatch(clearUser());
-            toast.success("Logged out successfully");
-        }
-    } catch (error) {
-        console.error("Logout failed: ", error);
-        // Even if the server logout fails, clear the local state
+      const response = await axiosInstance.post('auth/logout/', {}, { 
+        withCredentials: true 
+      });
+  
+      if (response.status === 200) {
+        console.log("Logout successful: ", response);
         dispatch(clearUser());
-        toast.warning("Logged out locally, but server session may still exist");
+        toast.success("Logged out successfully");
+      }
+    } catch (error) {
+      console.error("Logout failed: ", error);
+      dispatch(clearUser());
+      toast.warning("Logged out locally, but server session may still exist");
     } finally {
-        setShowLogoutModal(false);
+      setLoadingLogout(false);
+      setShowLogoutModal(false);
     }
-};
+  };
+  
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -89,7 +92,7 @@ function SettingsPage() {
 
       {/* Logout Confirmation Modal */}
       {showLogoutModal && (
-        <LogoutModal setShowLogoutModal={setShowLogoutModal} handleLogout={handleLogout} />
+        <LogoutModal setShowLogoutModal={setShowLogoutModal} handleLogout={handleLogout} loadingLogout={loadingLogout}/>
       )}
     </div>
   )

@@ -1,23 +1,26 @@
 import { useEffect } from 'react';
-import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import { useAccessControl } from '../customHooks/useAccessControl'; // Import the hook we created
 
+function UserProtectedRouter({ children }) {
+  const { accessLevel } = useAccessControl();
+  const navigate = useNavigate();
 
-function UserProtectedRouter({children}) {
-    const user = useSelector((state) => state.user);
-    const navigate = useNavigate();
-  
-    useEffect(() => {
-      if (!user.accessToken || !user.isAdmin) {
-        navigate('/user');
-      }
-    }, [user, navigate]);
-  
-    if (user.accessToken && user.isAdmin) {
-      return children;
+  useEffect(() => {
+    if (accessLevel === 'unauthorized') {
+      navigate('/user');
     }
-  
+  }, [accessLevel, navigate]);
+
+  if (accessLevel === 'loading') {
+    return <div>Loading...</div>; // Optional loading state
+  }
+
+  if (accessLevel === 'unauthorized') {
     return null;
+  }
+
+  return children;
 }
 
-export default UserProtectedRouter
+export default UserProtectedRouter;

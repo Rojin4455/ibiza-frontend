@@ -42,9 +42,9 @@ function UserDetails() {
                 )}
             </div>
             <div>
-                <h2 className="text-xl font-semibold">{user.username}</h2>
-                <p>{user.email}</p>
-                <p>{user.phone}</p>
+                <h2 className="text-xl font-semibold">{user?.username?user.username:""}</h2>
+                <p>{user?.email?user.email:""}</p>
+                <p>{user?.phone?user.phone:""}</p>
             </div>
 
             {/* Hidden file input for uploading the image */}
