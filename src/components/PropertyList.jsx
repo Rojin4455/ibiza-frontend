@@ -25,6 +25,7 @@ const PropertyList = () => {
     if (filtersObj?.type && filtersObj.type !== 'all') params.append('price_freq', filtersObj.type);
     if (filtersObj?.bedrooms && filtersObj.bedrooms !== 'all') params.append('beds', filtersObj.bedrooms);
     if (filtersObj?.bathrooms && filtersObj.bathrooms !== 'all') params.append('baths', filtersObj.bathrooms);
+    if (filtersObj?.xml_urls && filtersObj.xml_urls !== 'all') params.append('xml_urls', filtersObj.xml_urls);
 
     if (filtersObj?.locations?.length > 0) {
       filtersObj.locations.forEach(location => {
