@@ -97,7 +97,7 @@ useEffect(()=> {
   })();
 
   const handleViewUser = async (user) => {
-    navigate(`/user-properties/${user.id}`)
+    navigate(`/user-properties/${user.id}?locationId=${locationId}`)
   }
 
   // Filter users based on search
@@ -117,29 +117,7 @@ const usersLastWeek = users.filter(user => new Date(user.date_added) >= oneWeekA
   : 0;
 
 
-  // useEffect(() => {
-  //   const fetchCompanyNames = async () => {
-  //     try{
-  //     const response = await axiosInstance.get('accounts/get-company-names/')
-  //     if(response.status === 200){
-  //       console.log("response ;", response)
-  //       setSubAccounts(response.data)
-  //     }else{
-  //       console.error("error response", response)
-  //     }
-  //   }catch(error){
-  //     console.error("somethiong went wrong: ", error)
-  //   }
-  //   }
-  //   fetchCompanyNames()
-  // },[])
-  // Example sub-accounts data
-
-  // const subAccounts = [
-  //   { companyId: 'abc123', company_name: 'Location 1', locationId: 'loc123' },
-  //   { companyId: 'def456', company_name: 'Location 2', locationId: 'ttQIDuvyngILWMJ5wABA' },
-  //   { companyId: 'ghi789', company_name: 'Location 3', locationId: 'loc789' }
-  // ];
+  
 
   useEffect(() => {
 
@@ -280,7 +258,7 @@ const usersLastWeek = users.filter(user => new Date(user.date_added) >= oneWeekA
           </div>
           
           <div className="overflow-x-auto w-full">
-  <table className="min-w-[600px] w-full table-auto md:table-fixed divide-y divide-gray-200">
+  <table className="min-w-[700px] w-full table-auto md:table-fixed divide-y divide-gray-200">
     <thead className="bg-gray-50">
       <tr>
         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -291,6 +269,9 @@ const usersLastWeek = users.filter(user => new Date(user.date_added) >= oneWeekA
         </th>
         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
           Join Date
+        </th>
+        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+          Selected Property Count
         </th>
         <th className="px-4 py-3"></th>
       </tr>
@@ -304,7 +285,9 @@ const usersLastWeek = users.filter(user => new Date(user.date_added) >= oneWeekA
             className="hover:bg-gray-50 transition-colors duration-200"
           >
             <td className="px-4 py-4 whitespace-normal break-words">
-              <div className="font-semibold text-gray-900 capitalize">{user.first_name}</div>
+              <div className="font-semibold text-gray-900 capitalize">
+                {user.first_name}
+              </div>
             </td>
             <td className="px-4 py-4 whitespace-normal break-words">
               <div className="text-gray-600 italic">
@@ -318,6 +301,9 @@ const usersLastWeek = users.filter(user => new Date(user.date_added) >= oneWeekA
                 day: "numeric",
               })}
             </td>
+            <td className="px-4 py-4 whitespace-nowrap text-gray-600">
+              {user.properties?.length || 0}
+            </td>
             <td className="px-4 py-4 whitespace-nowrap text-right">
               <button
                 onClick={() => handleViewUser(user)}
@@ -330,7 +316,7 @@ const usersLastWeek = users.filter(user => new Date(user.date_added) >= oneWeekA
         ))
       ) : (
         <tr>
-          <td colSpan="4" className="px-4 py-4 text-center text-gray-500">
+          <td colSpan="5" className="px-4 py-4 text-center text-gray-500">
             No users found
           </td>
         </tr>
@@ -338,6 +324,7 @@ const usersLastWeek = users.filter(user => new Date(user.date_added) >= oneWeekA
     </tbody>
   </table>
 </div>
+
 
           
           {/* Pagination could be added here */}

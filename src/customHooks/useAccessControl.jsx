@@ -2,7 +2,6 @@
 import { useSearchParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { useEffect, useState } from 'react';
-import axiosInstance from '../axios/axiosInstance';
 
 export function useAccessControl() {
   const [searchParams] = useSearchParams();

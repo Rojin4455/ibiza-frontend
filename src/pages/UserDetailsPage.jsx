@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import Header from '../components/Header'
-import { useParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import UserProperties from '../components/UserProperties'
 import UserProfileSummary from '../components/UserProfileSummary'
 import axiosInstance from '../axios/axiosInstance'
@@ -9,6 +9,7 @@ function UserDetailsPage({selection}) {
   const { id } = useParams()
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
+
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -29,11 +30,15 @@ function UserDetailsPage({selection}) {
   if (loading) {
     return (
         <>
+        
+        {!selection && (
               <Header activeTab="dashboard" />
+            )}
       <div className="flex items-center justify-center h-screen">
 
         <div className="text-lg font-semibold text-gray-500">Loading user details...</div>
       </div>
+      
       </>
     )
   }

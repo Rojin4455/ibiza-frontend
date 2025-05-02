@@ -1,7 +1,7 @@
 import { Bath, Bed, MapPin } from 'lucide-react';
 import React, {useEffect, useState} from 'react'
 
-function UserPropertyCard({property, togglePropertySelection, isLastElement, lastPropertyElementRef, selectedProperties, noSelect}) {
+function UserPropertyCard({property, togglePropertySelection, isLastElement, lastPropertyElementRef, selectedProperties, noSelect, user}) {
     const [hovered, setHovered] = useState(false);
     const [imageIndex, setImageIndex] = useState(0);
   

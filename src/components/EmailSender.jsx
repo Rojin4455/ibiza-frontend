@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Dialog } from '@headlessui/react'
-import { Send, X } from 'lucide-react'
+import { Send, X, Loader2 } from 'lucide-react'
 import axiosInstance from '../axios/axiosInstance'
 import { toast } from 'sonner'
 
@@ -8,6 +8,7 @@ export default function EmailSender({selectedProperties, userId}) {
     console.log("selected properties: ", selectedProperties)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [message, setMessage] = useState('')
+  const [loading, setLoading] = useState(false)
 
   const currentUrl = new URL(window.location.href);
     currentUrl.searchParams.set("selection", "True");  // Adds or updates the param
@@ -17,8 +18,10 @@ export default function EmailSender({selectedProperties, userId}) {
   const handleSendEmail = async () => {
     const confirmSend = window.confirm("Are you sure you want to send the email?")
     if (confirmSend) {
+      setLoading(true)
       // send your message logic here
       console.log("Message sent:", message)
+      
       try{
         const response = await axiosInstance.put(`accounts/contacts/${userId}`,{
             remarks:message,
@@ -37,9 +40,12 @@ export default function EmailSender({selectedProperties, userId}) {
         toast.error("Something went wrong")
 
         console.log("something went wrong: ", error)
+      }finally{
+        setLoading(false)
+        setIsModalOpen(false)
+        setMessage('')
       }
-      setIsModalOpen(false)
-      setMessage('')
+
     }
   }
 
@@ -74,15 +80,22 @@ export default function EmailSender({selectedProperties, userId}) {
               onChange={(e) => setMessage(e.target.value)}
             />
 
-            <div className="mt-6 flex justify-end">
-              <button
-                onClick={handleSendEmail}
-                className="flex items-center bg-primary hover:bg-primaryhover text-white px-5 py-2 rounded-lg text-sm font-medium transition"
-              >
+          <div className="mt-6 flex justify-end">
+            <button
+              onClick={handleSendEmail}
+              disabled={loading}
+              className={`flex items-center justify-center bg-primary hover:bg-primaryhover text-white px-5 py-2 rounded-lg text-sm font-medium transition ${
+                loading ? 'opacity-60 cursor-not-allowed' : ''
+              }`}
+            >
+              {loading ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
                 <Send className="h-4 w-4 mr-2" />
-                Send Email
-              </button>
-            </div>
+              )}
+              {loading ? 'Sending...' : 'Send Email'}
+            </button>
+          </div>
           </Dialog.Panel>
         </div>
       </Dialog>

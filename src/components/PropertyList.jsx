@@ -9,9 +9,17 @@ import {
   clearProperties,
   setLoading,
 } from "../slices/propertySlice";
+import { useAccessControl } from "../customHooks/useAccessControl";
+import { useSearchParams } from "react-router-dom";
 
 const PropertyList = () => {
   const dispatch = useDispatch();
+  const { accessLevel,locationId } = useAccessControl();
+  const [searchParams] = useSearchParams();
+
+  const currentLocationId = locationId || searchParams.get('locationId');
+
+
   const { properties, totalCount, next, loading } = useSelector(state => state.properties);
   
   const [filters, setFilters] = useState(null);
@@ -37,11 +45,11 @@ const PropertyList = () => {
   };
 
   const fetchProperties = async (url = null, filtersToUse = null, reset = false) => {
-    if (loading) return;
+    if (loading || accessLevel === 'loading') return;
     dispatch(setLoading(true));
     try {
       const params = filtersToUse ? buildQueryParams(filtersToUse) : null;
-      const requestUrl = url ? url : `accounts/properties/?${params?.toString() || ''}`;
+      const requestUrl = url ? url : `accounts/properties/?${params?.toString() || ''}&accessLevel=${accessLevel}${currentLocationId ? `&locationId=${currentLocationId}` : ''}`;
 
       const response = await axiosInstance.get(requestUrl);
       const data = response.data;
@@ -89,7 +97,7 @@ const PropertyList = () => {
     dispatch(setLoading(true));
     try {
       
-    const requestUrl = `accounts/fetch-properties/?search=${[searchVal]}`;
+    const requestUrl = `accounts/fetch-properties/?search=${[searchVal]}&accessLevel=${accessLevel}${currentLocationId ? `&locationId=${currentLocationId}` : ''}`;
       const response = await axiosInstance.get(requestUrl);
       const data = response.data;
 
@@ -113,7 +121,7 @@ const PropertyList = () => {
         <div className="text-gray-600">Showing {properties.length} of {totalCount} properties</div>
       </div>
 
-      <SearchAndFilter onFilterChange={handleFilterChange} onSearch={onSearch}/>
+      <SearchAndFilter onFilterChange={handleFilterChange} onSearch={onSearch} accessLevel={accessLevel} currentLocationId={currentLocationId}/>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {properties.map((property, index) => (

@@ -8,6 +8,8 @@ import axios from 'axios';
 import { useDispatch } from 'react-redux';
 import { clearUser } from '../slices/UserSlice';
 import { toast } from 'sonner';
+import LocationManagement from '../components/Settings/OnboardingLocation';
+import { useLocation } from 'react-router-dom';
 
 function SettingsPage() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -15,6 +17,60 @@ function SettingsPage() {
   const [urls, setUrls] = useState([]);
   const dispatch = useDispatch()
   const [loadingLogout, setLoadingLogout] = useState(false);
+  const [showLocationModal, setShowLocationModal] = useState(false)
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [locations, setLocations] = useState([]);
+
+
+    
+
+
+      const location = useLocation();
+    
+      useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const code = params.get("code");
+
+        const fetchInstance = async () => {
+    
+        if (code) {
+          try{
+          // Send code to backend
+          const response = await axiosInstance.get(`${process.env.REACT_APP_BASE_API_URL}/core/tokens?code=${code}`)
+          if (response.status === 200){
+            toast.success("success")
+          }else{
+            toast.error("error")
+          }
+        }catch(error){
+          toast.error("something went wrong")
+        }
+        }
+        
+      }
+      fetchInstance()
+
+      }, [location.search]);
+
+
+      useEffect(() => {
+        const fetchLocations = async () => {
+            try{
+                const response = await axiosInstance.get('core/locations/')
+                if(response.status === 200){
+                    console.log("location response: ", response)
+                setLocations(response.data)
+                }else{
+                    console.error("error responseL :", response)
+                }
+            }catch(error){
+                console.error("something went wrong: ", error)
+            }
+        }
+        fetchLocations()
+      },[])
+
+
 
 
   useEffect(() => {
@@ -88,8 +144,10 @@ function SettingsPage() {
     <div className="min-h-screen bg-gray-50">
       <Header activeTab={'settings'} />
       
-      <Content setShowLogoutModal={setShowLogoutModal} handleUrlSubmit={handleUrlSubmit} setUrlInput={setUrlInput} urls={urls} setUrls={setUrls} urlInput={urlInput} handleRemoveUrl={handleRemoveUrl} />
-
+      <Content setShowLogoutModal={setShowLogoutModal} handleUrlSubmit={handleUrlSubmit} setUrlInput={setUrlInput} urls={urls} setUrls={setUrls} urlInput={urlInput} handleRemoveUrl={handleRemoveUrl} setIsModalOpen={setIsModalOpen} setLocations={setLocations} locations={locations}/>
+      {isModalOpen && (
+      <LocationManagement setIsModalOpen={setIsModalOpen} isModalOpen={isModalOpen} setLocations={setLocations} locations={locations}/>
+    )}
       {/* Logout Confirmation Modal */}
       {showLogoutModal && (
         <LogoutModal setShowLogoutModal={setShowLogoutModal} handleLogout={handleLogout} loadingLogout={loadingLogout}/>

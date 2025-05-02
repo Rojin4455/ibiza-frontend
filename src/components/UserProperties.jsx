@@ -11,10 +11,10 @@ import {
 } from '../slices/propertySlice';
 import EmailSender from './EmailSender';
 import { useParams } from 'react-router-dom';
+import UserDetails from './Settings/UserDetails';
 
 function UserProperties({ user }) {
 
-    console.log("userrrereregfdwb gg123:C", user)
   const dispatch = useDispatch();
   const { properties, totalCount, next, loading, noSelect } = useSelector(state => state.properties);
   const [searchTerm, setSearchTerm] = useState('');
@@ -23,8 +23,16 @@ function UserProperties({ user }) {
   const [selectOpen, setSelectOpen] = useState(null);
   const queryParams = new URLSearchParams(window.location.search);
   const selection = queryParams.get("selection") ?? "false";
-  const isSelection = selection === "True"; // this will be `true` if selection is 'true', otherwise false
-  console.log("selectionnnnn", isSelection)
+  const isSelection = selection === "True"; // this will be `true` if selection is 'true', otherwise false\
+  const [previousSelect, setPreviousSelect] = useState([])
+
+  useEffect(() => {
+    const selected = properties
+    .filter(prop => user.properties.includes(prop.id))
+    .map(prop => prop.id)
+    setSelectedProperties(selected)
+    
+  },[properties, user])
 
   const observer = useRef();
   const lastPropertyElementRef = useCallback(node => {
@@ -75,11 +83,9 @@ function UserProperties({ user }) {
         }
       const params = user ? buildQueryParams(user) : new URLSearchParams();
       if (searchTerm) params.append('search', searchTerm);
-      console.log("user obj: ", params.toString())
       const requestUrl = url ? url : `accounts/properties/?${params.toString()}`;
       const response = await axiosInstance.get(requestUrl);
       const data = response.data;
-      console.log("data data data",data)
 
       if (reset) {
         dispatch(setProperties(data));
@@ -126,27 +132,6 @@ function UserProperties({ user }) {
     });
   };
 
-  // Handle send message
-  const handleSendMessage = (e) => {
-    e.preventDefault();
-    if (!message.trim()) return;
-    
-    console.log("Sending message about properties:", {
-      message,
-      selectedProperties: properties.filter(prop => selectedProperties.includes(prop.id))
-    });
-    
-    // Here you would send the message to your API
-    
-    setMessage('');
-    // Optionally clear selections after sending
-    // setSelectedProperties([]);
-  };
-
-  // Toggle select dropdown
-  const toggleSelect = (propertyId) => {
-    setSelectOpen(prev => prev === propertyId ? null : propertyId);
-  };
 
   // Select all properties
   const selectAllProperties = () => {
@@ -161,42 +146,11 @@ function UserProperties({ user }) {
     <div className="flex flex-col h-ful p-4">
       <h2 className="text-xl font-bold mb-4">Properties for {user?.first_name || 'Selected User'}</h2>
       
-      {/* Search Bar */}
-      {/* <div className="mb-4 relative">
-        <div className="relative">
-          <input
-            type="text"
-            placeholder="Search properties..."
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-        </div>
-      </div> */}
       
-      {/* Message Form */}
-      {/* <form onSubmit={handleSendMessage} className="mb-4 flex">
-        <input
-          type="text"
-          placeholder="Type your message..."
-          className="flex-grow px-4 py-2 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-        />
-        <button
-          type="submit"
-          className="bg-primary hover:bg-primaryhover text-white px-4 py-2 rounded-r-lg flex items-center"
-        >
-          <Send className="h-4 w-4 mr-2" />
-          Send
-        </button>
-      </form> */}
         {!noSelect && !loading &&(
       <EmailSender selectedProperties={selectedProperties} userId={user.id}/>
     )}
       
-      {/* Properties List with Selection */}
       {!isSelection && (
       <div className="flex justify-between items-center mb-2">
         <span className="font-medium">Property List</span>
@@ -226,6 +180,7 @@ function UserProperties({ user }) {
                     selectedProperties={selectedProperties}
                     lastPropertyElementRef={isLastElement ? lastPropertyElementRef : null}
                     noSelect={noSelect}
+                    user={user}
                   />
                 );
               })}

@@ -38,7 +38,7 @@ function UserDetails() {
                         </div>
                     </div>
                 ) : (
-                    <FaUserCircle size={75} className="bg-white text-primary cursor-pointer" />
+                    <FaUserCircle size={75} className="bg-white text-secondary cursor-pointer" />
                 )}
             </div>
             <div>

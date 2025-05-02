@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Search, Filter, ChevronDown, MapPin, Bed, Bath, DollarSign, X, Check } from 'lucide-react';
 import axiosInstance from '../axios/axiosInstance';
 
-const SearchAndFilter = ({ onFilterChange, onSearch }) => {
+const SearchAndFilter = ({ onFilterChange, onSearch, accessLevel, currentLocationId }) => {
   const [showFilters, setShowFilters] = useState(false);
   const [locationSearch, setLocationSearch] = useState('');
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
@@ -69,7 +69,9 @@ const SearchAndFilter = ({ onFilterChange, onSearch }) => {
   
 
   useEffect(() => {
-    axiosInstance.get('/accounts/api/filters/')
+    if (accessLevel === 'loading') return;
+    console.log("herer")
+    axiosInstance.get(`/accounts/api/filters/?accessLevel=${accessLevel}${currentLocationId ? `&locationId=${currentLocationId}` : ''}`)
       .then(response => {
         setFilterOptions({
           priceMin: response.data.min_price || 0,
@@ -81,7 +83,7 @@ const SearchAndFilter = ({ onFilterChange, onSearch }) => {
         });
       })
       .catch(error => console.error("Error fetching filters", error));
-  }, []);
+  }, [accessLevel]);
 
   // Close location dropdown when clicking outside
   useEffect(() => {
