@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import XmlList from './XmlList';
 
 
-function Content({setShowLogoutModal, handleUrlSubmit, setUrlInput, urls, setUrls, urlInput, handleRemoveUrl, setIsModalOpen, setLocations, locations}) {
+function Content({setShowLogoutModal, handleUrlSubmit, setUrlInput, urls, setUrls, urlInput, handleRemoveUrl, setIsModalOpen, setLocations, locations, setTypeInput, typeInput}) {
 
     const [showModal, setShowModal] = useState(false);
     const [selectedUrlId, setSelectedUrlId] = useState(null);
@@ -29,6 +29,8 @@ function Content({setShowLogoutModal, handleUrlSubmit, setUrlInput, urls, setUrl
             if(response.status === 204){
                 console.log("deleted successfully")
                 toast.success("Feed Deleted Successfully")
+                handleRemoveUrl(selectedUrlId);
+                setShowModal(false);
             }else{
                 console.error("error response: ", response)
                 toast.error("Something went wrong")
@@ -41,8 +43,7 @@ function Content({setShowLogoutModal, handleUrlSubmit, setUrlInput, urls, setUrl
 
         }
 
-        handleRemoveUrl(selectedUrlId);
-        setShowModal(false);
+        
       }
     };
 
@@ -181,19 +182,29 @@ function Content({setShowLogoutModal, handleUrlSubmit, setUrlInput, urls, setUrl
           </div>
           
           <div className="px-6 py-5">
-          <form onSubmit={handleUrlSubmit} className="flex gap-3">
-  <div className="flex-grow">
-  <input
-  type="url"
-  value={urlInput}
-  onChange={(e) => setUrlInput(e.target.value)}
-  placeholder="https://example.com"
-  required
-  className="h-12 shadow-sm border p-4 border-primary focus:border-primaryhover focus:ring-0 block w-full sm:text-sm rounded-md py-3"
-/>
-
-
+          <form onSubmit={handleUrlSubmit} className="flex gap-3 flex-wrap sm:flex-nowrap">
+  <div className="flex-grow min-w-[200px]">
+    <input
+      type="url"
+      value={urlInput}
+      onChange={(e) => setUrlInput(e.target.value)}
+      placeholder="https://example.com"
+      required
+      className="h-12 shadow-sm border p-4 border-primary focus:border-primaryhover focus:ring-0 block w-full sm:text-sm rounded-md py-3"
+    />
   </div>
+
+  <div className="flex-grow min-w-[150px]">
+    <input
+      type="text"
+      value={typeInput}
+      onChange={(e) => setTypeInput(e.target.value)}
+      placeholder="Type name"
+      required
+      className="h-12 shadow-sm border p-4 border-primary focus:border-primaryhover focus:ring-0 block w-full sm:text-sm rounded-md py-3"
+    />
+  </div>
+
   <button
     type="submit"
     className="inline-flex items-center px-4 py-3 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primaryhover focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-primary"
@@ -202,82 +213,15 @@ function Content({setShowLogoutModal, handleUrlSubmit, setUrlInput, urls, setUrl
   </button>
 </form>
 
+
             
 <div className="mt-6">
   <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">
     Your URLs
   </h4>
   {urls.length > 0 ? (
-  //   <ul className="divide-y divide-gray-200">
-  //   {urls.map((item) => (
-  //       <li key={item.id} className="py-3 flex justify-between items-center">
-  //         <div className="flex-grow truncate mr-4">
-  //           <a
-  //             href={item.url}
-  //             target="_blank"
-  //             rel="noopener noreferrer"
-  //             className="text-indigo-600 hover:text-indigo-900 truncate"
-  //           >
-  //             {item.url}
-  //           </a>
-  //           <div className="text-xs text-gray-500 mt-1">
-  //             Added on {new Date(item.created_at).toLocaleDateString()}
-  //           </div>
-  //         </div>
-  //         <div className="flex items-center space-x-4">
-  //           <div className="flex items-center">
-  //             <span className="mr-2 text-sm text-gray-500">
-  //               {item.active ? "Active" : "Inactive"}
-  //             </span>
-  //             <button
-  //               onClick={() => toggleUrlActive(item.id)}
-  //               className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
-  //                 item.active ? "bg-indigo-600" : "bg-gray-200"
-  //               }`}
-  //               role="switch"
-  //               aria-checked={item.active}
-  //             >
-  //               <span
-  //                 aria-hidden="true"
-  //                 className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-  //                   item.active ? "translate-x-5" : "translate-x-0"
-  //                 }`}
-  //               />
-  //             </button>
-  //           </div>
-            
-  //           {/* Row-specific refresh button */}
-  //           <button
-  //             onClick={() => handleRefresh(item.id)}
-  //             disabled={refreshingItems[item.id]}
-  //             className={`relative flex items-center justify-center p-2 rounded-full transition-all duration-300 
-  //               ${refreshingItems[item.id] 
-  //                 ? "bg-blue-100 text-blue-400 cursor-not-allowed" 
-  //                 : "text-blue-500 hover:text-blue-700 hover:bg-blue-50"}`}
-  //             title={refreshingItems[item.id] ? "Refreshing feed..." : "Refresh feed"}
-  //           >
-  //             <RefreshCw 
-  //               className={`w-5 h-5 ${refreshingItems[item.id] ? "animate-spin" : ""}`} 
-  //             />
-              
-  //             {refreshingItems[item.id] && (
-  //               <span className="absolute top-full mt-1 whitespace-nowrap text-xs font-medium text-blue-500">
-  //                 Refreshing...
-  //               </span>
-  //             )}
-  //           </button>
-            
-  //           <button
-  //             onClick={() => openModal(item.id)}
-  //             className="text-red-500 hover:text-red-700 text-sm font-semibold"
-  //           >
-  //             Remove
-  //           </button>
-  //         </div>
-  //       </li>
-  //     ))}
-  // </ul>
-  <XmlList toggleUrlActive={toggleUrlActive} handleRefresh={handleRefresh} handleRemoveUrl={handleRemoveUrl} xmlUrls={urls} locations={locations}/>
+  
+  <XmlList toggleUrlActive={toggleUrlActive} handleRefresh={handleRefresh} handleRemoveUrl={handleRemoveUrl} xmlUrls={urls} locations={locations} setShowModal={setShowModal} openModal={openModal}/>
   
   ) : (
     <p className="text-gray-500 text-sm">You haven't added any URLs yet.</p>

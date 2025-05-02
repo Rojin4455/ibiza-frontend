@@ -65,17 +65,14 @@ const PropertyList = () => {
       dispatch(setLoading(false));
     }
   };
-
   useEffect(() => {
     fetchProperties(null, filters, true);
   }, [filters]);
-
   const handleScroll = () => {
     if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 100 && next && !loading) {
       fetchProperties(next, filters);
     }
   };
-
   useEffect(() => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);

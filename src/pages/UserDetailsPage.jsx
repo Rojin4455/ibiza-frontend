@@ -63,7 +63,7 @@ function UserDetailsPage({selection}) {
     )}
       <div className="container mx-auto px-4 py-6">
         <UserProfileSummary user={user} />
-        <UserProperties user={user} />
+        <UserProperties user={user}/>
       </div>
     </>
   )

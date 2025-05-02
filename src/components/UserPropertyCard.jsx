@@ -1,7 +1,7 @@
-import { Bath, Bed, MapPin } from 'lucide-react';
+import { Bath, Bed, MapPin, User } from 'lucide-react';
 import React, {useEffect, useState} from 'react'
 
-function UserPropertyCard({property, togglePropertySelection, isLastElement, lastPropertyElementRef, selectedProperties, noSelect, user}) {
+function UserPropertyCard({property, togglePropertySelection, isLastElement, lastPropertyElementRef, selectedProperties, noSelect, user, isSelection}) {
     const [hovered, setHovered] = useState(false);
     const [imageIndex, setImageIndex] = useState(0);
   
@@ -80,6 +80,12 @@ function UserPropertyCard({property, togglePropertySelection, isLastElement, las
                 <MapPin size={16} className="mr-1 text-slate-400" />
                 {property.town}, {property.province}
               </p>
+              {!isSelection && (
+              <p className="text-slate-500 text-sm mb-3 flex items-center">
+                <User size={16} className="mr-1 text-slate-400" />
+                {property.contact_name}
+              </p>
+              )}
     
               <div className="flex justify-between text-sm text-slate-600 mb-4">
                 <span className="flex items-center gap-1">

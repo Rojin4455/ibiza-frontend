@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MapPin, Bed, Bath } from 'lucide-react';
+import { MapPin, Bed, Bath,User } from 'lucide-react';
 
 const PropertyCard = ({ property }) => {
   const [hovered, setHovered] = useState(false);
@@ -37,7 +37,6 @@ const PropertyCard = ({ property }) => {
       {property.currency}
     </div>
   </div>
-
   <div className="p-5">
     <div className="flex justify-between items-center mb-2">
       <p className="text-xl font-semibold text-primaryhover">
@@ -47,10 +46,13 @@ const PropertyCard = ({ property }) => {
         {property.reference}
       </h3>
     </div>
-
     <p className="text-slate-500 text-sm mb-3 flex items-center">
       <MapPin size={16} className="mr-1 text-slate-400" />
       {property.town}, {property.province}
+    </p>
+    <p className="text-slate-500 text-sm mb-3 flex items-center">
+      <User size={16} className="mr-1 text-slate-400" />
+      {property.contact_name}
     </p>
     <div className="flex justify-between text-sm text-slate-600 mb-4">
       <span className="flex items-center gap-1">

@@ -20,6 +20,7 @@ function SettingsPage() {
   const [showLocationModal, setShowLocationModal] = useState(false)
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [locations, setLocations] = useState([]);
+    const [typeInput,setTypeInput] = useState("")
 
 
     
@@ -70,9 +71,6 @@ function SettingsPage() {
         fetchLocations()
       },[])
 
-
-
-
   useEffect(() => {
 
     const fetchUrls = async () => {
@@ -89,31 +87,35 @@ function SettingsPage() {
         }
     }
     fetchUrls()
-
   },[])
 
   const handleUrlSubmit = async (e) => {
     e.preventDefault();
     try{
         const response =  await axiosInstance.post('accounts/xmlfeed/',{
-            url:urlInput
+            url:urlInput,
+            contact_name:typeInput
         })
         if(response.status === 201){
             if (urlInput.trim()) {
                 setUrls([...urls, { date: Date.now(), url: urlInput.trim(), active:true}]);
                 setUrlInput('');
+                setTypeInput('')
+
               }
-            console.log("success response; ", response)
+            toast.success("Feed Added Successfully")
         }else{
-            console.log("error response ;", response)
+            toast.error("Something went wrong")
         }
     }catch(error){
-        console.error("somwtthing went wrong", error)
+      toast.error("Something went wrong")
+
     }
 
   };
 
   const handleRemoveUrl = (idToRemove) => {
+    console.log((":sdsssss", idToRemove))
     setUrls(urls.filter(url => url.id !== idToRemove));
   };
 
@@ -121,9 +123,8 @@ function SettingsPage() {
     setLoadingLogout(true);
     try {
       const response = await axiosInstance.post('auth/logout/', {}, { 
-        withCredentials: true 
+        withCredentials: true
       });
-  
       if (response.status === 200) {
         console.log("Logout successful: ", response);
         dispatch(clearUser());
@@ -138,17 +139,13 @@ function SettingsPage() {
       setShowLogoutModal(false);
     }
   };
-  
-
   return (
     <div className="min-h-screen bg-gray-50">
       <Header activeTab={'settings'} />
-      
-      <Content setShowLogoutModal={setShowLogoutModal} handleUrlSubmit={handleUrlSubmit} setUrlInput={setUrlInput} urls={urls} setUrls={setUrls} urlInput={urlInput} handleRemoveUrl={handleRemoveUrl} setIsModalOpen={setIsModalOpen} setLocations={setLocations} locations={locations}/>
+      <Content setShowLogoutModal={setShowLogoutModal} handleUrlSubmit={handleUrlSubmit} setUrlInput={setUrlInput} urls={urls} setUrls={setUrls} urlInput={urlInput} handleRemoveUrl={handleRemoveUrl} setIsModalOpen={setIsModalOpen} setLocations={setLocations} locations={locations} setTypeInput={setTypeInput} typeInput={typeInput}/>
       {isModalOpen && (
       <LocationManagement setIsModalOpen={setIsModalOpen} isModalOpen={isModalOpen} setLocations={setLocations} locations={locations}/>
     )}
-      {/* Logout Confirmation Modal */}
       {showLogoutModal && (
         <LogoutModal setShowLogoutModal={setShowLogoutModal} handleLogout={handleLogout} loadingLogout={loadingLogout}/>
       )}

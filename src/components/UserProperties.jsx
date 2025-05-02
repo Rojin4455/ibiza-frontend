@@ -181,6 +181,7 @@ function UserProperties({ user }) {
                     lastPropertyElementRef={isLastElement ? lastPropertyElementRef : null}
                     noSelect={noSelect}
                     user={user}
+                    isSelection={isSelection}
                   />
                 );
               })}

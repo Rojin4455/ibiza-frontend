@@ -429,6 +429,7 @@ const SearchAndFilter = ({ onFilterChange, onSearch, accessLevel, currentLocatio
         </div>
 
         {/* XML Feed */}
+        {console.log("cmlwmcewcvewc:", filterOptions.xml_urls)}
         <div className="space-y-3">
           <label className="block text-sm font-medium text-gray-700">Property Type</label>
           <div className="relative">
@@ -439,7 +440,7 @@ const SearchAndFilter = ({ onFilterChange, onSearch, accessLevel, currentLocatio
             >
               <option value="all">All Xml Feeds</option>
               {filterOptions.xml_urls.map((type, idx) => (
-                <option key={idx} value={type}>{type}</option>
+                <option key={idx} value={type[0]}>{type[1]}</option>
               ))}
             </select>
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
