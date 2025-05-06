@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import XmlList from './XmlList';
 
 
-function Content({setShowLogoutModal, handleUrlSubmit, setUrlInput, urls, setUrls, urlInput, handleRemoveUrl, setIsModalOpen, setLocations, locations, setTypeInput, typeInput}) {
+function Content({setShowLogoutModal, handleUrlSubmit, setUrlInput, urls, setUrls, urlInput, handleRemoveUrl, setIsModalOpen, setLocations, locations, setTypeInput, typeInput, isLoading}) {
 
     const [showModal, setShowModal] = useState(false);
     const [selectedUrlId, setSelectedUrlId] = useState(null);
@@ -206,11 +206,14 @@ function Content({setShowLogoutModal, handleUrlSubmit, setUrlInput, urls, setUrl
   </div>
 
   <button
-    type="submit"
-    className="inline-flex items-center px-4 py-3 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primaryhover focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-primary"
-  >
-    Add URL
-  </button>
+  type="submit"
+  disabled={isLoading}
+  className={`inline-flex items-center px-4 py-3 border border-transparent text-sm font-medium rounded-md text-white ${
+    isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-primary hover:bg-primaryhover'
+  } focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-primary`}
+>
+  {isLoading ? 'Adding...' : 'Add URL'}
+</button>
 </form>
 
 

@@ -22,6 +22,9 @@ function SettingsPage() {
     const [locations, setLocations] = useState([]);
     const [typeInput,setTypeInput] = useState("")
 
+    const [isLoading, setIsLoading] = useState(false);
+
+
 
     
 
@@ -91,28 +94,30 @@ function SettingsPage() {
 
   const handleUrlSubmit = async (e) => {
     e.preventDefault();
-    try{
-        const response =  await axiosInstance.post('accounts/xmlfeed/',{
-            url:urlInput,
-            contact_name:typeInput
-        })
-        if(response.status === 201){
-            if (urlInput.trim()) {
-                setUrls([...urls, { date: Date.now(), url: urlInput.trim(), active:true}]);
-                setUrlInput('');
-                setTypeInput('')
-
-              }
-            toast.success("Feed Added Successfully")
-        }else{
-            toast.error("Something went wrong")
+    setIsLoading(true);
+    try {
+      const response = await axiosInstance.post('accounts/xmlfeed/', {
+        url: urlInput,
+        contact_name: typeInput
+      });
+  
+      if (response.status === 201) {
+        if (urlInput.trim()) {
+          setUrls([...urls, { date: Date.now(), url: urlInput.trim(), active: true }]);
+          setUrlInput('');
+          setTypeInput('');
         }
-    }catch(error){
-      toast.error("Something went wrong")
-
+        toast.success("Feed Added Successfully");
+      } else {
+        toast.error("Something went wrong");
+      }
+    } catch (error) {
+      toast.error("Something went wrong");
+    } finally {
+      setIsLoading(false);
     }
-
   };
+  
 
   const handleRemoveUrl = (idToRemove) => {
     console.log((":sdsssss", idToRemove))
@@ -142,7 +147,7 @@ function SettingsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header activeTab={'settings'} />
-      <Content setShowLogoutModal={setShowLogoutModal} handleUrlSubmit={handleUrlSubmit} setUrlInput={setUrlInput} urls={urls} setUrls={setUrls} urlInput={urlInput} handleRemoveUrl={handleRemoveUrl} setIsModalOpen={setIsModalOpen} setLocations={setLocations} locations={locations} setTypeInput={setTypeInput} typeInput={typeInput}/>
+      <Content setShowLogoutModal={setShowLogoutModal} handleUrlSubmit={handleUrlSubmit} setUrlInput={setUrlInput} urls={urls} setUrls={setUrls} urlInput={urlInput} handleRemoveUrl={handleRemoveUrl} setIsModalOpen={setIsModalOpen} setLocations={setLocations} locations={locations} setTypeInput={setTypeInput} typeInput={typeInput} isLoading={isLoading}/>
       {isModalOpen && (
       <LocationManagement setIsModalOpen={setIsModalOpen} isModalOpen={isModalOpen} setLocations={setLocations} locations={locations}/>
     )}
