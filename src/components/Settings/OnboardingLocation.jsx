@@ -170,7 +170,7 @@ export default function OnboardingLocation({setIsModalOpen, isModalOpen, setLoca
                         </div>
                       </div>
                       
-                      <div className="flex items-center gap-4">
+                      {/* <div className="flex items-center gap-4">
                         <span className={`px-2 py-1 rounded-full text-xs ${
                           location.is_blocked 
                             ? 'bg-red-100 text-red-800' 
@@ -190,7 +190,7 @@ export default function OnboardingLocation({setIsModalOpen, isModalOpen, setLoca
                         >
                           {location.is_blocked ? 'Unblock' : 'Block'}
                         </button>
-                      </div>
+                      </div> */}
                     </div>
                   ))}
                 </div>

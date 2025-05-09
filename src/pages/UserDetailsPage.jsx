@@ -4,11 +4,34 @@ import { useParams, useSearchParams } from 'react-router-dom'
 import UserProperties from '../components/UserProperties'
 import UserProfileSummary from '../components/UserProfileSummary'
 import axiosInstance from '../axios/axiosInstance'
+import SearchAndFilter from '../components/SearchAndFilter'
+import { useAccessControl } from '../customHooks/useAccessControl'
+import { clearProperties } from '../slices/propertySlice'
+import { useDispatch } from 'react-redux'
 
 function UserDetailsPage({selection}) {
   const { id } = useParams()
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [filters, setFilters] = useState(null);
+  const dispatch = useDispatch()
+
+
+  const { accessLevel, locationId } = useAccessControl();
+
+  const onSearch = () => {
+
+  }
+
+  const onFilterChange = (newFilters) => {
+    console.log("on gilter change: ", newFilters)
+    // dispatch(clearProperties());
+    setFilters(newFilters);
+  }
+
+  useEffect(() => {
+    // fetchProperties(null, filters, true);
+  }, [filters]);
 
 
   useEffect(() => {
@@ -63,6 +86,7 @@ function UserDetailsPage({selection}) {
     )}
       <div className="container mx-auto px-4 py-6">
         <UserProfileSummary user={user} />
+        {/* <SearchAndFilter onFilterChange={onFilterChange} onSearch={onSearch} accessLevel={accessLevel} currentLocationId={locationId}  /> */}
         <UserProperties user={user}/>
       </div>
     </>

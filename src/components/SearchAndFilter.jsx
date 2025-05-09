@@ -3,6 +3,8 @@ import { Search, Filter, ChevronDown, MapPin, Bed, Bath, DollarSign, X, Check } 
 import axiosInstance from '../axios/axiosInstance';
 
 const SearchAndFilter = ({ onFilterChange, onSearch, accessLevel, currentLocationId }) => {
+
+  // console.log("alllll: ",accessLevel, currentLocationId)
   const [showFilters, setShowFilters] = useState(false);
   const [locationSearch, setLocationSearch] = useState('');
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
@@ -19,7 +21,8 @@ const SearchAndFilter = ({ onFilterChange, onSearch, accessLevel, currentLocatio
     propertyType: 'all',
     bedrooms: 'all',
     bathrooms: 'all',
-    locations: []
+    locations: [], 
+    currency_types: []
   });
 
   console.log("filtersSS: ", filters)
@@ -31,41 +34,13 @@ const SearchAndFilter = ({ onFilterChange, onSearch, accessLevel, currentLocatio
     property_types: [],
     price_freqs: [],
     locations: [],
-    xml_urls: []
+    xml_urls: [],
+    currency_types: [],
   });
 
   console.log("filtersss: ", filterOptions)
 
-  // const handleSubmitFilter = async () => {
-  //   try {
-  //     const params = new URLSearchParams();
   
-  //     // Append filters to query params
-  //     if (filters.priceMin) params.append('price_min', filters.priceMin);
-  //     if (filters.priceMax) params.append('price_max', filters.priceMax);
-  //     if (filters.propertyType && filters.propertyType !== 'all') params.append('property_type', filters.propertyType);
-  //     if (filters.type && filters.type !== 'all') params.append('price_freq', filters.type);
-  //     if (filters.bedrooms && filters.bedrooms !== 'all') params.append('beds', filters.bedrooms);
-  //     if (filters.bathrooms && filters.bathrooms !== 'all') params.append('baths', filters.bathrooms);
-  
-  //     if (filters.locations && filters.locations.length > 0) {
-  //       filters.locations.forEach(location => {
-  //         params.append('town', location); // DjangoFilterBackend will read multiple `locations`
-  //       });
-  //     }
-  
-  //     const response = await axiosInstance.get(`accounts/properties/?${params.toString()}`);
-  
-  //     if (response.status === 200) {
-  //       console.log("Success response:", response.data);
-  //     } else {
-  //       console.error("Error response:", response);
-  //     }
-  
-  //   } catch (error) {
-  //     console.error("Something went wrong:", error);
-  //   }
-  // };
   
 
   useEffect(() => {
@@ -79,7 +54,8 @@ const SearchAndFilter = ({ onFilterChange, onSearch, accessLevel, currentLocatio
           property_types: response.data.property_types || [],
           price_freqs: response.data.price_freqs || [],
           locations: response.data.locations || [],
-          xml_urls: response.data.xml_urls || []
+          xml_urls: response.data.xml_urls || [],
+          currency_types: response.data.currency_types || []
         });
       })
       .catch(error => console.error("Error fetching filters", error));
@@ -104,7 +80,7 @@ const SearchAndFilter = ({ onFilterChange, onSearch, accessLevel, currentLocatio
     if (onFilterChange) {
       onFilterChange({ 
         ...filters, 
-        location: selectedLocations 
+        locations: selectedLocations 
       });
     }
   };
@@ -152,6 +128,7 @@ const SearchAndFilter = ({ onFilterChange, onSearch, accessLevel, currentLocatio
   };
 
   useEffect(() => {
+    console.log("seleceted LoationL: ", selectedLocations)
     handleFilterChange('locations',selectedLocations)
   },[selectedLocations])
 
@@ -246,7 +223,7 @@ const SearchAndFilter = ({ onFilterChange, onSearch, accessLevel, currentLocatio
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
               <div className="relative flex-1">
-                <span className="absolute inset-y-0 left-3 flex items-center text-gray-500">$</span>
+                {/* <span className="absolute inset-y-0 left-3 flex items-center text-gray-500"></span> */}
                 <input
                   type="number"
                   placeholder="Min"
@@ -257,7 +234,7 @@ const SearchAndFilter = ({ onFilterChange, onSearch, accessLevel, currentLocatio
               </div>
               <span className="text-gray-500">-</span>
               <div className="relative flex-1">
-                <span className="absolute inset-y-0 left-3 flex items-center text-gray-500">$</span>
+                {/* <span className="absolute inset-y-0 left-3 flex items-center text-gray-500"></span> */}
                 <input
                   type="number"
                   placeholder="Max"
@@ -428,8 +405,6 @@ const SearchAndFilter = ({ onFilterChange, onSearch, accessLevel, currentLocatio
           </div>
         </div>
 
-        {/* XML Feed */}
-        {console.log("cmlwmcewcvewc:", filterOptions.xml_urls)}
         <div className="space-y-3">
           <label className="block text-sm font-medium text-gray-700">Property Type</label>
           <div className="relative">
@@ -448,6 +423,27 @@ const SearchAndFilter = ({ onFilterChange, onSearch, accessLevel, currentLocatio
             </div>
           </div>
         </div>
+
+        <div className="space-y-3">
+          <label className="block text-sm font-medium text-gray-700">Currency</label>
+          <div className="relative">
+            <select
+              value={filters.currency_types}
+              onChange={(e) => handleFilterChange('currency_types', e.target.value)}
+              className="block w-full pl-3 pr-10 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm appearance-none bg-white"
+            >
+              <option value="all">All Xml Feeds</option>
+              {console.log("fefefefefeffefefeff: ", filterOptions)}
+              {filterOptions.currency_types.map((type, idx) => (
+                <option key={idx} value={type}>{type}</option>
+              ))}
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+              <ChevronDown size={16} />
+            </div>
+          </div>
+        </div>
+
       </div>
 
       {/* Buttons */}
@@ -463,6 +459,7 @@ const SearchAndFilter = ({ onFilterChange, onSearch, accessLevel, currentLocatio
               bathrooms: 'all',
               location: [],
               xml_urls:[],
+              currency_types: [],
             });
             setSelectedLocations([]);
             setLocationSearch('');

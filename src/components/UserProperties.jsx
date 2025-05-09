@@ -89,7 +89,6 @@ function UserProperties({ user }) {
 
       if (reset) {
         dispatch(setProperties(data));
-        // Reset selected properties when fetching new list
         setSelectedProperties([]);
       } else {
         dispatch(addMoreProperties(data));

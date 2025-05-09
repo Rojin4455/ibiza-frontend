@@ -34,6 +34,8 @@ const PropertyList = () => {
     if (filtersObj?.bedrooms && filtersObj.bedrooms !== 'all') params.append('beds', filtersObj.bedrooms);
     if (filtersObj?.bathrooms && filtersObj.bathrooms !== 'all') params.append('baths', filtersObj.bathrooms);
     if (filtersObj?.xml_urls && filtersObj.xml_urls !== 'all') params.append('xml_urls', filtersObj.xml_urls);
+    if (filtersObj?.currency_types && filtersObj.currency_types !== 'all') params.append('currency', filtersObj.currency_types);
+
 
     if (filtersObj?.locations?.length > 0) {
       filtersObj.locations.forEach(location => {
@@ -79,6 +81,7 @@ const PropertyList = () => {
   });
 
   const handleFilterChange = (newFilters) => {
+    console.log("on gilter change: ", newFilters)
     dispatch(clearProperties());
     setFilters(newFilters);
   };
