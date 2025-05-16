@@ -1,7 +1,7 @@
-import { Bath, Bed, MapPin, User } from 'lucide-react';
+import { Bath, Bed, CheckCircle, MapPin, User } from 'lucide-react';
 import React, {useEffect, useState} from 'react'
 
-function UserPropertyCard({property, togglePropertySelection, isLastElement, lastPropertyElementRef, selectedProperties, noSelect, user, isSelection}) {
+function UserPropertyCard({property, togglePropertySelection, isLastElement, lastPropertyElementRef, selectedProperties, noSelect, user, isSelection, previousSelect}) {
     const [hovered, setHovered] = useState(false);
     const [imageIndex, setImageIndex] = useState(0);
   
@@ -18,16 +18,30 @@ function UserPropertyCard({property, togglePropertySelection, isLastElement, las
       return () => clearInterval(interval);
     }, [hovered, property.images.length]);
 
+    const isPreviouslySelected = previousSelect?.includes(property.id);
+    console.log(previousSelect?.some(p => p.id === property.id))
+    console.log("deded : ", property.id)
+
 
   return (
 
-          <div
-            key={property.id}
-            ref={isLastElement ? lastPropertyElementRef : null}
-            className="bg-slate-50 rounded-2xl shadow-lg overflow-hidden transition-transform duration-300 hover:shadow-2xl hover:-translate-y-1 border border-slate-200"
-            onMouseEnter={() => setHovered(true)}
-            onMouseLeave={() => setHovered(false)}
-          >
+<div
+  key={property.id}
+  ref={isLastElement ? lastPropertyElementRef : null}
+  className={`relative bg-slate-50 rounded-2xl shadow-lg overflow-hidden transition-transform duration-300 hover:shadow-2xl hover:-translate-y-1 border ${
+    isPreviouslySelected ? 'border-green-500' : 'border-slate-200'
+  }`}
+  onMouseEnter={() => setHovered(true)}
+  onMouseLeave={() => setHovered(false)}
+>
+  {/* Badge for previously selected */}
+  {isPreviouslySelected && (
+    <div className="absolute top-3 right-3 bg-green-600 text-white text-xs font-semibold px-3 py-1 rounded-full shadow-md z-20 flex items-center gap-1">
+  <CheckCircle size={14} className="text-white" />
+  Already Sent
+</div>
+  )}
+
             {/* Image section */}
             <div className="relative">
               {property.images && property.images.length > 0 ? (
@@ -67,13 +81,17 @@ function UserPropertyCard({property, togglePropertySelection, isLastElement, las
     
             {/* Details section */}
             <div className="p-5">
+
+
               <div className="flex justify-between items-center mb-2">
+                
                 <p className="text-xl font-semibold text-primaryhover">
                   €{parseFloat(property.price).toLocaleString()}
                 </p>
                 <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide">
                   {property.reference}
                 </h3>
+
               </div>
     
               <p className="text-slate-500 text-sm mb-3 flex items-center">

@@ -25,12 +25,13 @@ function UserProperties({ user }) {
   const selection = queryParams.get("selection") ?? "false";
   const isSelection = selection === "True"; // this will be `true` if selection is 'true', otherwise false\
   const [previousSelect, setPreviousSelect] = useState([])
+  
 
   useEffect(() => {
     const selected = properties
     .filter(prop => user.properties.includes(prop.id))
     .map(prop => prop.id)
-    setSelectedProperties(selected)
+    setPreviousSelect(selected)
     
   },[properties, user])
 
@@ -181,6 +182,7 @@ function UserProperties({ user }) {
                     noSelect={noSelect}
                     user={user}
                     isSelection={isSelection}
+                    previousSelect={previousSelect}
                   />
                 );
               })}

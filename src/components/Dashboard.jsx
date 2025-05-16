@@ -79,7 +79,7 @@ useEffect(()=> {
     const dateCount = {};
   
     users.forEach(user => {
-      const dateOnly = new Date(user.date_added).toISOString().split('T')[0];
+      const dateOnly = new Date(user.contact.date_added).toISOString().split('T')[0];
       dateCount[dateOnly] = (dateCount[dateOnly] || 0) + 1;
     });
   
@@ -97,19 +97,19 @@ useEffect(()=> {
   })();
 
   const handleViewUser = async (user) => {
-    navigate(`/user-properties/${user.id}?locationId=${locationId}`)
+    navigate(`/user-properties/${user.contact.id}?locationId=${locationId}`)
   }
 
   // Filter users based on search
   const filteredUsers = users.filter(user => 
-    user.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase()))
+    user.contact.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (user.contact.email && user.contact.email.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const oneWeekAgo = new Date();
 oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
-const usersLastWeek = users.filter(user => new Date(user.date_added) >= oneWeekAgo);
+const usersLastWeek = users.filter(user => new Date(user.contact.date_added) >= oneWeekAgo);
 
   // Calculate growth rate (simplified)
   const growthRate = usersLastWeek.length > 0 
@@ -257,72 +257,231 @@ const usersLastWeek = users.filter(user => new Date(user.date_added) >= oneWeekA
             </div>
           </div>
           
-          <div className="overflow-x-auto w-full">
-  <table className="min-w-[700px] w-full table-auto md:table-fixed divide-y divide-gray-200">
-    <thead className="bg-gray-50">
-      <tr>
-        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-          Name
-        </th>
-        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-          Email
-        </th>
-        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-          Join Date
-        </th>
-        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-          Selected Property Count
-        </th>
-        <th className="px-4 py-3"></th>
-      </tr>
-    </thead>
-
-    <tbody className="bg-white divide-y divide-gray-200">
-      {filteredUsers.length > 0 ? (
-        filteredUsers.map((user) => (
-          <tr
-            key={user.id}
-            className="hover:bg-gray-50 transition-colors duration-200"
-          >
-            <td className="px-4 py-4 whitespace-normal break-words">
-              <div className="font-semibold text-gray-900 capitalize">
-                {user.first_name}
-              </div>
-            </td>
-            <td className="px-4 py-4 whitespace-normal break-words">
-              <div className="text-gray-600 italic">
-                {user.email ? user.email : "No Email Provided"}
-              </div>
-            </td>
-            <td className="px-4 py-4 whitespace-nowrap text-gray-500">
-              {new Date(user.date_added).toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "short",
-                day: "numeric",
-              })}
-            </td>
-            <td className="px-4 py-4 whitespace-nowrap text-gray-600">
-              {user.properties?.length || 0}
-            </td>
-            <td className="px-4 py-4 whitespace-nowrap text-right">
-              <button
-                onClick={() => handleViewUser(user)}
-                className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md text-white bg-primary hover:bg-primaryhover transition"
-              >
-                View Details
-              </button>
-            </td>
+          <div className="w-full">
+  {/* Table container with shadow and rounded corners */}
+  <div className="bg-white shadow-lg rounded-xl overflow-hidden">
+    {/* Desktop view */}
+    <div className="hidden lg:block overflow-x-auto">
+      <table className="w-full divide-y divide-gray-200">
+        <thead className="bg-gradient-to-r from-primary/10 to-primary/5">
+          <tr>
+            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+              Name
+            </th>
+            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+              Email
+            </th>
+            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+              Join Date
+            </th>
+            <th className="px-6 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+              Total Properties
+            </th>
+            <th className="px-6 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+              Selected Properties
+            </th>
+            <th className="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
+              Total Value
+            </th>
+            <th className="px-6 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+              Actions
+            </th>
           </tr>
-        ))
+        </thead>
+
+        <tbody className="bg-white divide-y divide-gray-200">
+          {filteredUsers.length > 0 ? (
+            filteredUsers.map((user, index) => {
+              // Calculate total properties and total value
+              const totalProperties = user.properties?.length || 0;
+              const selectedProperties = user.contact.properties?.length || 0;
+              const totalValue = user.properties?.reduce((sum, property) => {
+                const price = parseFloat(property.price) || 0;
+                return sum + price;
+              }, 0) || 0;
+
+              return (
+                <tr
+                  key={user.contact.id}
+                  className={`
+                    hover:bg-gray-50 transition-all duration-200
+                    ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}
+                  `}
+                >
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0 h-10 w-10">
+                        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-primaryhover flex items-center justify-center text-white font-bold">
+                          {user.contact.first_name?.charAt(0).toUpperCase() || 'U'}
+                        </div>
+                      </div>
+                      <div className="ml-4">
+                        <div className="text-sm font-medium text-gray-900 capitalize">
+                          {user.contact.first_name || 'N/A'}
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-600">
+                      {user.contact.email ? (
+                        <span className="flex items-center">
+                          <svg className="w-4 h-4 mr-1 text-gray-400" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+                            <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                          </svg>
+                          {user.contact.email}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400 italic">No Email</span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-600">
+                      <span className="flex items-center">
+                        <svg className="w-4 h-4 mr-1 text-gray-400" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+                          <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        {new Date(user.contact.date_added).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <span className="px-3 py-1 inline-flex text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                      {totalProperties}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <span className="px-3 py-1 inline-flex text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                      {selectedProperties}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right">
+                    <div className="text-sm font-semibold text-gray-900">
+                    €{totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                    <button
+                      onClick={() => handleViewUser(user)}
+                      className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg text-white bg-gradient-to-r from-primary to-primaryhover hover:from-primaryhover hover:to-primary transform hover:scale-105 transition-all duration-200 shadow-sm"
+                    >
+                      <svg className="w-4 h-4 mr-1" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+                        <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                      </svg>
+                      Details
+                    </button>
+                  </td>
+                </tr>
+              );
+            })
+          ) : (
+            <tr>
+              <td colSpan="7" className="px-6 py-12 text-center">
+                <div className="flex flex-col items-center">
+                  <svg className="w-12 h-12 text-gray-300 mb-4" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+                    <path d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                  </svg>
+                  <p className="text-gray-500 text-lg">No users found</p>
+                  <p className="text-gray-400 text-sm mt-1">Try adjusting your search filters</p>
+                </div>
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+
+    {/* Mobile view - Card layout */}
+    <div className="lg:hidden">
+      {filteredUsers.length > 0 ? (
+        <div className="divide-y divide-gray-200">
+          {filteredUsers.map((user, index) => {
+            const totalProperties = user.properties?.length || 0;
+            const selectedProperties = user.contact.properties?.length || 0;
+            const totalValue = user.properties?.reduce((sum, property) => {
+              const price = parseFloat(property.price) || 0;
+              return sum + price;
+            }, 0) || 0;
+
+            return (
+              <div key={user.contact.id} className="p-6 hover:bg-gray-50 transition-colors duration-200">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center">
+                    <div className="h-12 w-12 rounded-full bg-gradient-to-br from-primary to-primaryhover flex items-center justify-center text-white font-bold text-lg">
+                      {user.contact.first_name?.charAt(0).toUpperCase() || 'U'}
+                    </div>
+                    <div className="ml-4">
+                      <h3 className="text-lg font-semibold text-gray-900 capitalize">
+                        {user.contact.first_name || 'N/A'}
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        {user.contact.email || 'No Email'}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleViewUser(user)}
+                    className="px-4 py-2 text-sm font-medium rounded-lg text-white bg-gradient-to-r from-primary to-primaryhover shadow-sm"
+                  >
+                    Details
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 mt-4">
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase font-semibold">Join Date</p>
+                    <p className="text-sm text-gray-900 mt-1">
+                      {new Date(user.contact.date_added).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase font-semibold">Total Properties</p>
+                    <p className="text-sm text-gray-900 mt-1">
+                      <span className="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                        {totalProperties}
+                      </span>
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase font-semibold">Selected Properties</p>
+                    <p className="text-sm text-gray-900 mt-1">
+                      <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                        {selectedProperties}
+                      </span>
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase font-semibold">Total Value</p>
+                    <p className="text-sm font-semibold text-gray-900 mt-1">
+                    {totalValue.toLocaleString('en-IE',{ style: 'currency', currency: "EUR" }, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       ) : (
-        <tr>
-          <td colSpan="5" className="px-4 py-4 text-center text-gray-500">
-            No users found
-          </td>
-        </tr>
+        <div className="p-12 text-center">
+          <svg className="w-12 h-12 text-gray-300 mx-auto mb-4" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+            <path d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+          </svg>
+          <p className="text-gray-500 text-lg">No users found</p>
+          <p className="text-gray-400 text-sm mt-1">Try adjusting your search filters</p>
+        </div>
       )}
-    </tbody>
-  </table>
+    </div>
+  </div>
 </div>
 
 
