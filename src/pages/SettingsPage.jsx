@@ -40,7 +40,7 @@ function SettingsPage() {
         if (code) {
           try{
           // Send code to backend
-          const response = await axiosInstance.get(`${process.env.REACT_APP_BASE_API_URL}/core/tokens?code=${code}`)
+          const response = await axiosInstance.get(`${process.env.REACT_APP_BASE_API_URL}core/tokens?code=${code}`)
           if (response.status === 200){
             toast.success("success")
           }else{
