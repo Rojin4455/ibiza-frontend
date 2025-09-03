@@ -14,6 +14,9 @@ export default function Dashboard() {
   const { isFullAccess, isRestricted, locationId: accessLocationId } = useAccessControl();
   const [searchParams] = useSearchParams();
   const [subAccounts, setSubAccounts] = useState([])
+  const [totalCount, setTotalCount] = useState(0);
+  const [nextPage, setNextPage] = useState(null);
+  const [prevPage, setPrevPage] = useState(null);
 
   // Determine the locationId from access control or fallback to URL param
   const locationId = accessLocationId || searchParams.get('locationId');
@@ -55,20 +58,32 @@ export default function Dashboard() {
   };
 
 
-  const fetchContacts = async () => {
-    try{
-        const response = await axiosInstance.get(`accounts/contacts/?location_id=${locationId}`)
-        if(response.status === 200){
-            console.log("response: ", response.data)
-            setUsers(response.data)
-        }else{
-            console.error("error response: ", response)
-        }
-    }catch(error){
-        console.error("something went wrong: ", error)
+  const fetchContacts = async (url) => {
+    try {
+      const apiUrl = url ? url : `accounts/contacts/?location_id=${locationId}`;
+      const response = await axiosInstance.get(apiUrl);
+  
+      if (response.status === 200) {
+        setUsers(response.data.results);   // ✅ only current page
+        setTotalCount(response.data.count); 
+        setNextPage(response.data.next);
+        setPrevPage(response.data.previous);
+      } else {
+        console.error("error response: ", response);
+      }
+    } catch (error) {
+      console.error("something went wrong: ", error);
     }
-}
+  };
 
+
+  const handleNext = () => {
+    if (nextPage) fetchContacts(nextPage.replace("http://localhost:8000/", ""));
+  };
+  
+  const handlePrevious = () => {
+    if (prevPage) fetchContacts(prevPage.replace("http://localhost:8000/", ""));
+  };
 useEffect(()=> {
 
     fetchContacts()
@@ -186,7 +201,7 @@ const usersLastWeek = users.filter(user => new Date(user.contact.date_added) >= 
               </div>
               <div className="ml-4">
                 <h2 className="text-sm font-medium text-gray-500">Total Leads</h2>
-                <p className="text-2xl font-bold text-gray-800">{users.length}</p>
+                <p className="text-2xl font-bold text-gray-800">{totalCount}</p>
               </div>
             </div>
           </div>
@@ -488,9 +503,27 @@ const usersLastWeek = users.filter(user => new Date(user.contact.date_added) >= 
           
           {/* Pagination could be added here */}
           <div className="bg-gray-50 px-6 py-3 flex justify-between items-center">
-            <div className="text-sm text-gray-500">
-              Showing {filteredUsers.length} of {users.length} users
-            </div>
+          <div className="flex items-center justify-between">
+  <div className="text-sm text-gray-500">
+    Showing {users.length} of {totalCount} users
+  </div>
+  <div className="flex gap-2">
+    <button
+      onClick={handlePrevious}
+      disabled={!prevPage}
+      className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50"
+    >
+      Previous
+    </button>
+    <button
+      onClick={handleNext}
+      disabled={!nextPage}
+      className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50"
+    >
+      Next
+    </button>
+  </div>
+</div>
           </div>
         </div>
       </div>
