@@ -58,7 +58,8 @@ const handleLogin = async (data) => {
     );
 
     if (response.status === 200) {
-      let isAdmin = response.data.user.email === 'admin@gmail.com';
+      // let isAdmin = response.data.user.email === 'dennis@gmail.com';
+      let isAdmin = true
       dispatch(setUser({ accessToken: response.data.access, isAdmin, user: response.data.user }));
       toast.success('Successfully logged in');
       navigate(`/?locationId=ttQIDuvyngILWMJ5wABA`);
