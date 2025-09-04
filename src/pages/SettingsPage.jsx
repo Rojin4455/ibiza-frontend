@@ -80,8 +80,8 @@ function SettingsPage() {
         try{
             const response = await axiosInstance.get("accounts/xmlfeed/")
             if(response.status === 200){
-                console.log("responseL: ", response.data)
-                setUrls(response.data)
+                console.log("responseL: ", response.data.results)
+                setUrls(response.data.results)
             }else{
                 console.error("error response :", response)
             }
