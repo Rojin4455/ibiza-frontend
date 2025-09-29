@@ -295,9 +295,9 @@ const usersLastWeek = users.filter(user => new Date(user.contact.date_added) >= 
             <th className="px-6 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
               Selected Properties
             </th>
-            <th className="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
+            {/* <th className="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">
               Total Value
-            </th>
+            </th> */}
             <th className="px-6 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
               Actions
             </th>
@@ -375,11 +375,11 @@ const usersLastWeek = users.filter(user => new Date(user.contact.date_added) >= 
                       {selectedProperties}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right">
+                  {/* <td className="px-6 py-4 whitespace-nowrap text-right">
                     <div className="text-sm font-semibold text-gray-900">
                     €{totalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </div>
-                  </td>
+                  </td> */}
                   <td className="px-6 py-4 whitespace-nowrap text-center">
                     <button
                       onClick={() => handleViewUser(user)}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Filter, ChevronDown, MapPin, Bed, Bath, DollarSign, X, Check } from 'lucide-react';
+import { Search, Filter, ChevronDown, MapPin, Bed, Bath, DollarSign, X, Check, Euro } from 'lucide-react';
 import axiosInstance from '../axios/axiosInstance';
 
 const SearchAndFilter = ({ onFilterChange, onSearch, accessLevel, currentLocationId }) => {
@@ -140,16 +140,16 @@ const SearchAndFilter = ({ onFilterChange, onSearch, accessLevel, currentLocatio
   // For the price range slider
   const handlePriceMinChange = (e) => {
     const value = parseInt(e.target.value, 10);
-    if (value >= 0 && (!filters.priceMax || value <= filters.priceMax)) {
+    // if (value >= 0 && (!filters.priceMax || value <= filters.priceMax)) {
       handleFilterChange('priceMin', value);
-    }
+    // }
   };
 
   const handlePriceMaxChange = (e) => {
     const value = parseInt(e.target.value, 10);
-    if (!value || (value >= filters.priceMin)) {
+    // if (!value || (value >= filters.priceMin)) {
       handleFilterChange('priceMax', value || filterOptions.priceMax);
-    }
+    // }
   };
   
   return (
@@ -217,7 +217,7 @@ const SearchAndFilter = ({ onFilterChange, onSearch, accessLevel, currentLocatio
         {/* Price Range */}
         <div className="space-y-3">
           <label className="block text-sm font-medium text-gray-700 flex items-center">
-            <DollarSign className="h-4 w-4 mr-1 text-primary" />
+            <Euro className="h-4 w-4 mr-1 text-primary" />
             Price Range
           </label>
           <div className="space-y-4">
