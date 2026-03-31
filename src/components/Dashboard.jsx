@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Users, UserPlus, Activity, Search, Settings } from 'lucide-react';
+import { Users, UserPlus, Activity, Search, Loader2 } from 'lucide-react';
 import axiosInstance from '../axios/axiosInstance';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAccessControl } from '../customHooks/useAccessControl';
@@ -31,10 +31,34 @@ export default function Dashboard() {
   const navigate = useNavigate()
 
   const [searchTerm, setSearchTerm] = useState('');
+  const [contactsLoading, setContactsLoading] = useState(false);
+  const isFirstSearchRun = useRef(true);
+
+  const getContactsUrl = (pageUrl = null) => {
+    if (pageUrl) return pageUrl;
+    let url = `accounts/contacts/?location_id=${locationId}`;
+    if (searchTerm.trim()) {
+      url += `&search=${encodeURIComponent(searchTerm.trim())}`;
+    }
+    return url;
+  };
 
   useEffect(() => {
-    fetchContacts()
-  },[locationId])
+    fetchContacts(getContactsUrl());
+  }, [locationId]);
+
+  // Debounced backend search when searchTerm changes
+  useEffect(() => {
+    if (!locationId) return;
+    if (isFirstSearchRun.current) {
+      isFirstSearchRun.current = false;
+      return;
+    }
+    const timer = setTimeout(() => {
+      fetchContacts(getContactsUrl());
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   useEffect(() => {
     // Find and set the default selected account based on locationId
@@ -59,36 +83,34 @@ export default function Dashboard() {
 
 
   const fetchContacts = async (url) => {
+    setContactsLoading(true);
     try {
-      const apiUrl = url ? url : `accounts/contacts/?location_id=${locationId}`;
+      const apiUrl = url ? url : getContactsUrl();
       const response = await axiosInstance.get(apiUrl);
-  
+
       if (response.status === 200) {
-        setUsers(response.data.results);   // ✅ only current page
-        setTotalCount(response.data.count); 
-        setNextPage(response.data.next);
-        setPrevPage(response.data.previous);
+        setUsers(response.data.results ?? []);
+        setTotalCount(response.data.count ?? 0);
+        setNextPage(response.data.next ?? null);
+        setPrevPage(response.data.previous ?? null);
       } else {
         console.error("error response: ", response);
       }
     } catch (error) {
       console.error("something went wrong: ", error);
+    } finally {
+      setContactsLoading(false);
     }
   };
 
 
   const handleNext = () => {
-    if (nextPage) fetchContacts(nextPage.replace("http://localhost:8000/", ""));
+    if (nextPage) fetchContacts(nextPage?.replace(/^https?:\/\/[^/]+/, "") || getContactsUrl());
   };
   
   const handlePrevious = () => {
-    if (prevPage) fetchContacts(prevPage.replace("http://localhost:8000/", ""));
+    if (prevPage) fetchContacts(prevPage?.replace(/^https?:\/\/[^/]+/, "") || getContactsUrl());
   };
-useEffect(()=> {
-
-    fetchContacts()
-},[])
-  
   // Chart data - sample user growth over time
   const chartData = (() => {
     const dateCount = {};
@@ -115,12 +137,7 @@ useEffect(()=> {
     navigate(`/user-properties/${user.contact.id}?locationId=${locationId}`)
   }
 
-  // Filter users based on search
-  const filteredUsers = users.filter(user => 
-    user.contact.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (user.contact.email && user.contact.email.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
-
+  // Contacts are now filtered by the backend via search param; display API results directly
   const oneWeekAgo = new Date();
 oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
@@ -263,16 +280,24 @@ const usersLastWeek = users.filter(user => new Date(user.contact.date_added) >= 
                 <input
                   type="text"
                   placeholder="Search users..."
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-70 disabled:cursor-not-allowed"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
+                  disabled={contactsLoading}
                 />
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
               </div>
             </div>
           </div>
           
-          <div className="w-full">
+          <div className="w-full relative min-h-[280px]">
+  {/* Loading overlay */}
+  {contactsLoading && (
+    <div className="absolute inset-0 bg-white/80 backdrop-blur-[2px] z-10 flex flex-col items-center justify-center rounded-b-xl">
+      <Loader2 className="h-10 w-10 text-primary animate-spin mb-3" />
+      <p className="text-sm font-medium text-gray-600">Loading contacts...</p>
+    </div>
+  )}
   {/* Table container with shadow and rounded corners */}
   <div className="bg-white shadow-lg rounded-xl overflow-hidden">
     {/* Desktop view */}
@@ -305,8 +330,8 @@ const usersLastWeek = users.filter(user => new Date(user.contact.date_added) >= 
         </thead>
 
         <tbody className="bg-white divide-y divide-gray-200">
-          {filteredUsers.length > 0 ? (
-            filteredUsers.map((user, index) => {
+          {users.length > 0 ? (
+            users.map((user, index) => {
               // Calculate total properties and total value
               const totalProperties = user.properties?.length || 0;
               const selectedProperties = user.contact.properties?.length || 0;
@@ -414,9 +439,9 @@ const usersLastWeek = users.filter(user => new Date(user.contact.date_added) >= 
 
     {/* Mobile view - Card layout */}
     <div className="lg:hidden">
-      {filteredUsers.length > 0 ? (
+      {users.length > 0 ? (
         <div className="divide-y divide-gray-200">
-          {filteredUsers.map((user, index) => {
+          {users.map((user, index) => {
             const totalProperties = user.properties?.length || 0;
             const selectedProperties = user.contact.properties?.length || 0;
             const totalValue = user.properties?.reduce((sum, property) => {
@@ -510,15 +535,15 @@ const usersLastWeek = users.filter(user => new Date(user.contact.date_added) >= 
   <div className="flex gap-2">
     <button
       onClick={handlePrevious}
-      disabled={!prevPage}
-      className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50"
+      disabled={!prevPage || contactsLoading}
+      className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
     >
       Previous
     </button>
     <button
       onClick={handleNext}
-      disabled={!nextPage}
-      className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50"
+      disabled={!nextPage || contactsLoading}
+      className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
     >
       Next
     </button>
