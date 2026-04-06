@@ -1,10 +1,29 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Users, UserPlus, Activity, Search, Loader2 } from 'lucide-react';
+import { Users, UserPlus, Activity, Search, Loader2, Filter } from 'lucide-react';
 import axiosInstance from '../axios/axiosInstance';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAccessControl } from '../customHooks/useAccessControl';
 
+function ContactTagsCell({ contact, compact = false }) {
+  const tags = Array.isArray(contact?.tags) ? contact.tags : [];
+  if (tags.length === 0) {
+    return <span className="text-xs text-gray-400">—</span>;
+  }
+  return (
+    <div className={`flex flex-wrap gap-1 ${compact ? '' : 'max-w-[240px]'}`}>
+      {tags.map((t, i) => (
+        <span
+          key={`${i}-${String(t)}`}
+          className="inline-flex max-w-[160px] truncate rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-800 ring-1 ring-gray-200/80"
+          title={String(t)}
+        >
+          {String(t)}
+        </span>
+      ))}
+    </div>
+  );
+}
 
 export default function Dashboard() {
   // Sample data - replace with your actual data
@@ -31,34 +50,40 @@ export default function Dashboard() {
   const navigate = useNavigate()
 
   const [searchTerm, setSearchTerm] = useState('');
+  const [listingType, setListingType] = useState('all');
+  const [priceMin, setPriceMin] = useState('');
+  const [priceMax, setPriceMax] = useState('');
+  const [propertyTypeFilter, setPropertyTypeFilter] = useState('');
   const [contactsLoading, setContactsLoading] = useState(false);
-  const isFirstSearchRun = useRef(true);
 
   const getContactsUrl = (pageUrl = null) => {
     if (pageUrl) return pageUrl;
-    let url = `accounts/contacts/?location_id=${locationId}`;
-    if (searchTerm.trim()) {
-      url += `&search=${encodeURIComponent(searchTerm.trim())}`;
-    }
-    return url;
+    if (!locationId) return 'accounts/contacts/';
+    const params = new URLSearchParams();
+    params.set('location_id', locationId);
+    if (searchTerm.trim()) params.set('search', searchTerm.trim());
+    if (listingType && listingType !== 'all') params.set('listing_type', listingType);
+    if (priceMin.trim()) params.set('contact_price_min', priceMin.trim());
+    if (priceMax.trim()) params.set('contact_price_max', priceMax.trim());
+    if (propertyTypeFilter.trim()) params.set('contact_property_type', propertyTypeFilter.trim());
+    return `accounts/contacts/?${params.toString()}`;
   };
 
   useEffect(() => {
-    fetchContacts(getContactsUrl());
-  }, [locationId]);
-
-  // Debounced backend search when searchTerm changes
-  useEffect(() => {
-    if (!locationId) return;
-    if (isFirstSearchRun.current) {
-      isFirstSearchRun.current = false;
-      return;
-    }
+    if (!locationId) return undefined;
     const timer = setTimeout(() => {
       fetchContacts(getContactsUrl());
-    }, 400);
+    }, 350);
     return () => clearTimeout(timer);
-  }, [searchTerm]);
+  }, [locationId, searchTerm, listingType, priceMin, priceMax, propertyTypeFilter]);
+
+  const clearContactFilters = () => {
+    setListingType('all');
+    setPriceMin('');
+    setPriceMax('');
+    setPropertyTypeFilter('');
+    setSearchTerm('');
+  };
 
   useEffect(() => {
     // Find and set the default selected account based on locationId
@@ -273,19 +298,87 @@ const usersLastWeek = users.filter(user => new Date(user.contact.date_added) >= 
         
         {/* Users List Section */}
         <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="p-6 border-b border-gray-200">
-            <div className="flex justify-between items-center">
-              <h2 className="text-lg font-medium text-gray-800">Leads Who Have Match</h2>
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search users..."
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-70 disabled:cursor-not-allowed"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+          <div className="p-6 border-b border-gray-200 space-y-4">
+            <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+              <h2 className="text-lg font-medium text-gray-800 shrink-0">Leads Who Have Match</h2>
+              <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-end lg:justify-end w-full xl:w-auto">
+                <div className="flex items-center gap-2 text-gray-600">
+                  <Filter className="h-4 w-4 shrink-0 text-gray-500" aria-hidden />
+                  <label className="sr-only" htmlFor="listing-type-filter">Listing</label>
+                  <select
+                    id="listing-type-filter"
+                    value={listingType}
+                    onChange={(e) => setListingType(e.target.value)}
+                    disabled={contactsLoading || !locationId}
+                    className="text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40 min-w-[140px]"
+                  >
+                    <option value="all">All listings</option>
+                    <option value="sale">Sale only</option>
+                    <option value="rental">Rental only</option>
+                    <option value="both">Sale & rental</option>
+                  </select>
+                </div>
+                <div className="flex flex-wrap items-end gap-2">
+                  <div>
+                    <label htmlFor="contact-price-min" className="block text-xs font-medium text-gray-500 mb-1">Budget min</label>
+                    <input
+                      id="contact-price-min"
+                      type="text"
+                      placeholder="e.g. 500k"
+                      value={priceMin}
+                      onChange={(e) => setPriceMin(e.target.value)}
+                      disabled={contactsLoading || !locationId}
+                      className="w-[110px] text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="contact-price-max" className="block text-xs font-medium text-gray-500 mb-1">Budget max</label>
+                    <input
+                      id="contact-price-max"
+                      type="text"
+                      placeholder="e.g. 2m"
+                      value={priceMax}
+                      onChange={(e) => setPriceMax(e.target.value)}
+                      disabled={contactsLoading || !locationId}
+                      className="w-[110px] text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label htmlFor="contact-prop-type" className="block text-xs font-medium text-gray-500 mb-1">Property type</label>
+                  <select
+                    id="contact-prop-type"
+                    value={propertyTypeFilter}
+                    onChange={(e) => setPropertyTypeFilter(e.target.value)}
+                    disabled={contactsLoading || !locationId}
+                    className="text-sm border border-gray-300 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-primary/40 min-w-[140px]"
+                  >
+                    <option value="">Any</option>
+                    <option value="villa">Villa</option>
+                    <option value="apartment">Apartment</option>
+                    <option value="land">Land</option>
+                    <option value="finca">Finca</option>
+                  </select>
+                </div>
+                <button
+                  type="button"
+                  onClick={clearContactFilters}
                   disabled={contactsLoading}
-                />
-                <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+                  className="text-sm text-primary hover:text-primaryhover font-medium px-2 py-2 disabled:opacity-50"
+                >
+                  Clear filters
+                </button>
+                <div className="relative flex-1 min-w-[200px] max-w-md">
+                  <input
+                    type="text"
+                    placeholder="Search users..."
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-70 disabled:cursor-not-allowed"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    disabled={contactsLoading}
+                  />
+                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400 pointer-events-none" />
+                </div>
               </div>
             </div>
           </div>
@@ -312,6 +405,9 @@ const usersLastWeek = users.filter(user => new Date(user.contact.date_added) >= 
               Email
             </th>
             <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+              Tags
+            </th>
+            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
               Join Date
             </th>
             <th className="px-6 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
@@ -332,13 +428,16 @@ const usersLastWeek = users.filter(user => new Date(user.contact.date_added) >= 
         <tbody className="bg-white divide-y divide-gray-200">
           {users.length > 0 ? (
             users.map((user, index) => {
-              // Calculate total properties and total value
-              const totalProperties = user.properties?.length || 0;
+              const totalProperties =
+                user.property_match_count ?? user.properties?.length ?? 0;
               const selectedProperties = user.contact.properties?.length || 0;
-              const totalValue = user.properties?.reduce((sum, property) => {
-                const price = parseFloat(property.price) || 0;
-                return sum + price;
-              }, 0) || 0;
+              const totalValue =
+                user.property_match_total_value != null && user.property_match_total_value !== ''
+                  ? Number(user.property_match_total_value)
+                  : user.properties?.reduce((sum, property) => {
+                      const price = parseFloat(property.price) || 0;
+                      return sum + price;
+                    }, 0) || 0;
 
               return (
                 <tr
@@ -375,6 +474,9 @@ const usersLastWeek = users.filter(user => new Date(user.contact.date_added) >= 
                         <span className="text-gray-400 italic">No Email</span>
                       )}
                     </div>
+                  </td>
+                  <td className="px-6 py-4 align-top">
+                    <ContactTagsCell contact={user.contact} />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-600">
@@ -442,12 +544,16 @@ const usersLastWeek = users.filter(user => new Date(user.contact.date_added) >= 
       {users.length > 0 ? (
         <div className="divide-y divide-gray-200">
           {users.map((user, index) => {
-            const totalProperties = user.properties?.length || 0;
+            const totalProperties =
+              user.property_match_count ?? user.properties?.length ?? 0;
             const selectedProperties = user.contact.properties?.length || 0;
-            const totalValue = user.properties?.reduce((sum, property) => {
-              const price = parseFloat(property.price) || 0;
-              return sum + price;
-            }, 0) || 0;
+            const totalValue =
+              user.property_match_total_value != null && user.property_match_total_value !== ''
+                ? Number(user.property_match_total_value)
+                : user.properties?.reduce((sum, property) => {
+                    const price = parseFloat(property.price) || 0;
+                    return sum + price;
+                  }, 0) || 0;
 
             return (
               <div key={user.contact.id} className="p-6 hover:bg-gray-50 transition-colors duration-200">
@@ -471,6 +577,11 @@ const usersLastWeek = users.filter(user => new Date(user.contact.date_added) >= 
                   >
                     Details
                   </button>
+                </div>
+
+                <div className="mt-3">
+                  <p className="text-xs text-gray-500 uppercase font-semibold mb-1.5">Tags</p>
+                  <ContactTagsCell contact={user.contact} compact />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 mt-4">

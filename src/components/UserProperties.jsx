@@ -40,6 +40,41 @@ function firstMatchingPropertyType(propertyTypeField) {
   return null;
 }
 
+function tagTokensFromContact(contact) {
+  const tags = contact?.tags;
+  if (!Array.isArray(tags)) return new Set();
+  const out = new Set();
+  for (const raw of tags) {
+    const s = String(raw).toLowerCase().trim();
+    if (!s) continue;
+    out.add(s);
+    for (const part of s.split(/[\s/_]+/)) {
+      const p = part.trim();
+      if (p) out.add(p);
+    }
+  }
+  return out;
+}
+
+/**
+ * When price_freq is empty, derive sale/rental from GHL tags + property_status
+ * (matches backend get_filtered_properties_for_contact / price_freq_modes).
+ */
+function getPriceFreqModesFromContact(contact) {
+  if (!contact) return null;
+  if (hasMeaningfulFilterValue(contact.price_freq)) return null;
+  const tokens = tagTokensFromContact(contact);
+  let sale = tokens.has('sale');
+  let rental = tokens.has('rental');
+  const ps = String(contact.property_status || '').trim().toLowerCase();
+  if (ps === 'sale') sale = true;
+  if (ps === 'rental') rental = true;
+  if (sale && rental) return 'sale,rental';
+  if (sale) return 'sale';
+  if (rental) return 'rental';
+  return null;
+}
+
 /** Query params for accounts/properties/ from contact filter fields (only set values). */
 export function buildContactPropertyQueryParams(contact, searchTerm) {
   const params = new URLSearchParams();
@@ -53,6 +88,9 @@ export function buildContactPropertyQueryParams(contact, searchTerm) {
   }
   if (hasMeaningfulFilterValue(contact.price_freq)) {
     params.append('price_freq', String(contact.price_freq).trim().toLowerCase());
+  } else {
+    const modes = getPriceFreqModesFromContact(contact);
+    if (modes) params.append('price_freq_modes', modes);
   }
 
   if (contact.beds != null && hasMeaningfulFilterValue(contact.beds)) {
@@ -77,6 +115,82 @@ export function buildContactPropertyQueryParams(contact, searchTerm) {
   }
 
   return params;
+}
+
+function ContactTagsAndFilterSummary({ user }) {
+  if (!user) return null;
+  const modes = getPriceFreqModesFromContact(user);
+  const tokens = tagTokensFromContact(user);
+  const showSale = tokens.has('sale') || String(user.property_status || '').toLowerCase() === 'sale';
+  const showRental = tokens.has('rental') || String(user.property_status || '').toLowerCase() === 'rental';
+  const hasListingBadges = showSale || showRental;
+  const tags = Array.isArray(user.tags) ? user.tags : [];
+
+  return (
+    <div className="mb-4 rounded-lg border border-gray-200 bg-gray-50/80 p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-600 mb-2">GHL tags</p>
+          <div className="flex flex-wrap gap-1.5">
+            {tags.length > 0 ? (
+              tags.map((t, i) => (
+                <span
+                  key={`${i}-${String(t)}`}
+                  className="inline-flex max-w-full truncate rounded-full bg-white px-2.5 py-0.5 text-xs font-medium text-gray-800 ring-1 ring-gray-200"
+                  title={String(t)}
+                >
+                  {String(t)}
+                </span>
+              ))
+            ) : (
+              <span className="text-sm text-gray-500">No tags on this contact</span>
+            )}
+          </div>
+        </div>
+        <div className="shrink-0 text-right">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-600 mb-2">Listing filter</p>
+          <div className="flex flex-wrap justify-end gap-1.5">
+            {hasMeaningfulFilterValue(user.price_freq) ? (
+              <span className="inline-flex rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-semibold text-violet-900 ring-1 ring-violet-200">
+                price_freq: {String(user.price_freq).trim()}
+              </span>
+            ) : null}
+            {hasListingBadges ? (
+              <>
+                {showSale && (
+                  <span className="inline-flex rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-900 ring-1 ring-emerald-200">
+                    Sale
+                  </span>
+                )}
+                {showRental && (
+                  <span className="inline-flex rounded-full bg-sky-100 px-2.5 py-0.5 text-xs font-semibold text-sky-900 ring-1 ring-sky-200">
+                    Rental
+                  </span>
+                )}
+              </>
+            ) : null}
+            {!hasMeaningfulFilterValue(user.price_freq) && !hasListingBadges && (
+              <span className="text-xs text-gray-500">No sale/rental filter</span>
+            )}
+          </div>
+        </div>
+      </div>
+      <p className="mt-3 text-xs text-gray-600 border-t border-gray-200/80 pt-3">
+        <span className="font-medium text-gray-800">Properties below</span> use these preferences, including{' '}
+        {hasMeaningfulFilterValue(user.price_freq) ? (
+          <code className="rounded bg-white px-1 py-0.5 text-[11px] ring-1 ring-gray-200">price_freq</code>
+        ) : modes ? (
+          <code className="rounded bg-white px-1 py-0.5 text-[11px] ring-1 ring-gray-200">
+            price_freq_modes={modes}
+          </code>
+        ) : (
+          'no listing-type filter'
+        )}
+        {', '}
+        plus price, location, beds/baths, and type when set.
+      </p>
+    </div>
+  );
 }
 
 function UserProperties({ user }) {
@@ -163,6 +277,23 @@ function UserProperties({ user }) {
     }
   };
 
+  const tagsDependencyKey = Array.isArray(user?.tags)
+    ? [...user.tags].map(String).sort().join('\u0001')
+    : '';
+
+  const contactFilterFingerprint = [
+    user?.min_price,
+    user?.max_price,
+    user?.beds,
+    user?.baths,
+    user?.province,
+    user?.preferred_location,
+    user?.property_type,
+    user?.price_freq,
+    user?.property_status,
+    tagsDependencyKey,
+  ].join('|');
+
   useEffect(() => {
     if (!user?.id) return undefined;
     if (!isSelection && accessLevel === 'loading') return undefined;
@@ -170,9 +301,9 @@ function UserProperties({ user }) {
       dispatch(clearProperties());
       fetchProperties(null, true);
     }, 500);
-  
+
     return () => clearTimeout(timer);
-  }, [searchTerm, accessLevel, user?.id, isSelection]);
+  }, [searchTerm, accessLevel, user?.id, isSelection, contactFilterFingerprint]);
 
   const handleScroll = () => {
     if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 100 && next && !loading) {
@@ -209,8 +340,9 @@ function UserProperties({ user }) {
   return (
     <div className="flex flex-col h-ful p-4">
       <h2 className="text-xl font-bold mb-4">Properties for {user?.first_name || 'Selected User'}</h2>
-      
-      
+
+      {!isSelection && <ContactTagsAndFilterSummary user={user} />}
+
         {!noSelect && !loading &&(
       <EmailSender selectedProperties={selectedProperties} userId={user.id}/>
     )}

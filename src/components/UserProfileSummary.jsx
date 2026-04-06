@@ -44,8 +44,43 @@ function formatPriceRangeLabel(minPrice, maxPrice) {
   return `${a} - ${b}`;
 }
 
+function tagTokensFromUser(user) {
+  const tags = user?.tags;
+  if (!Array.isArray(tags)) return new Set();
+  const out = new Set();
+  for (const raw of tags) {
+    const s = String(raw).toLowerCase().trim();
+    if (!s) continue;
+    out.add(s);
+    for (const part of s.split(/[\s/_]+/)) {
+      const p = part.trim();
+      if (p) out.add(p);
+    }
+  }
+  return out;
+}
+
+/** Aligns with backend: tags sale/rental, plus price_freq and property_status hints. */
+function getSaleRentalFlags(user) {
+  const tokens = tagTokensFromUser(user);
+  let sale = tokens.has('sale');
+  let rental = tokens.has('rental');
+  const pf = String(user?.price_freq || '').trim().toLowerCase();
+  if (pf) {
+    if (pf.includes('sale')) sale = true;
+    if (pf.includes('rent') || pf === 'week' || pf.includes('week')) rental = true;
+  }
+  const ps = String(user?.property_status || '').trim().toLowerCase();
+  if (ps === 'sale') sale = true;
+  if (ps === 'rental') rental = true;
+  return { sale, rental };
+}
+
 const UserProfileSummary = ({ user }) => {
   if (!user) return null;
+
+  const { sale: showSale, rental: showRental } = getSaleRentalFlags(user);
+  const hasListingInterest = showSale || showRental;
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -104,12 +139,38 @@ const UserProfileSummary = ({ user }) => {
                   {formatPriceRangeLabel(user.min_price, user.max_price)}
                 </span>
               </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center text-gray-600">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center text-gray-600 shrink-0">
                   <Clock className="h-4 w-4 mr-2" />
-                  <span>Frequency</span>
+                  <span>Listing</span>
                 </div>
-                <span className="font-medium">{user.price_freq}</span>
+                <div className="flex flex-col items-end gap-1 min-w-0">
+                  <div className="flex flex-wrap gap-1.5 justify-end">
+                    {hasListingInterest ? (
+                      <>
+                        {showSale && (
+                          <span className="inline-flex items-center rounded-full bg-emerald-100 text-emerald-900 px-2.5 py-0.5 text-xs font-semibold ring-1 ring-emerald-200/80">
+                            Sale
+                          </span>
+                        )}
+                        {showRental && (
+                          <span className="inline-flex items-center rounded-full bg-sky-100 text-sky-900 px-2.5 py-0.5 text-xs font-semibold ring-1 ring-sky-200/80">
+                            Rental
+                          </span>
+                        )}
+                      </>
+                    ) : user.price_freq ? (
+                      <span className="font-medium text-gray-800 text-right">{user.price_freq}</span>
+                    ) : (
+                      <span className="font-medium text-gray-500">—</span>
+                    )}
+                  </div>
+                  {hasListingInterest && user.price_freq ? (
+                    <span className="text-xs text-gray-500 text-right max-w-[14rem] truncate" title={user.price_freq}>
+                      {user.price_freq}
+                    </span>
+                  ) : null}
+                </div>
               </div>
             </div>
           </div>
