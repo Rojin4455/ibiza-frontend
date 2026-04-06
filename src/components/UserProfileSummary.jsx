@@ -1,17 +1,51 @@
 import React from 'react';
 import { User, MapPin, Euro, Home, Phone, Mail, Calendar, Clock, Bed, Bath } from 'lucide-react';
 
-const UserProfileSummary = ({ user }) => {
-  if (!user) return null;
+/** Match backend/contact parsing: 12k, 2.3m, plain numbers, strip currency noise. */
+function parsePriceToNumber(price) {
+  if (price === null || price === undefined) return null;
+  const str = String(price).trim().toLowerCase();
+  if (!str || str === 'nan') return null;
+  if (str.endsWith('m')) {
+    const n = parseFloat(str.slice(0, -1));
+    return Number.isFinite(n) ? n * 1_000_000 : null;
+  }
+  if (str.endsWith('k')) {
+    const n = parseFloat(str.slice(0, -1));
+    return Number.isFinite(n) ? n * 1_000 : null;
+  }
+  const cleaned = str.replace(/[^\d.]/g, '');
+  if (!cleaned) return null;
+  const n = parseFloat(cleaned);
+  return Number.isFinite(n) ? n : null;
+}
 
-
-  const formatPrice = (price) => {
+function formatPriceEUR(price) {
+  const n = parsePriceToNumber(price);
+  if (n !== null) {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'EUR',
-      maximumFractionDigits: 0
-    }).format(price);
-  };
+      maximumFractionDigits: 0,
+    }).format(n);
+  }
+  const raw = price != null && String(price).trim() ? String(price).trim() : '';
+  return raw ? `€${raw}` : '—';
+}
+
+function formatPriceRangeLabel(minPrice, maxPrice) {
+  const minOk = parsePriceToNumber(minPrice);
+  const maxOk = parsePriceToNumber(maxPrice);
+  const a = formatPriceEUR(minPrice);
+  const b = formatPriceEUR(maxPrice);
+  if (minOk === null && maxOk === null && a === '—' && b === '—') return '—';
+  if (minOk === null && maxOk !== null) return `Up to ${b}`;
+  if (minOk !== null && maxOk === null) return `${a}+`;
+  return `${a} - ${b}`;
+}
+
+const UserProfileSummary = ({ user }) => {
+  if (!user) return null;
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -36,7 +70,9 @@ const UserProfileSummary = ({ user }) => {
               </h2>
               <div className="flex items-center text-blue-50">
                 <MapPin className="h-4 w-4 mr-1" />
-                <span>{user.province}, {user.country}</span>
+                <span>
+                  {[user.province, user.country].filter(Boolean).join(', ') || '—'}
+                </span>
               </div>
             </div>
           </div>
@@ -65,7 +101,7 @@ const UserProfileSummary = ({ user }) => {
                   <span>Price Range</span>
                 </div>
                 <span className="font-medium">
-                  {formatPrice(user.min_price)} - {formatPrice(user.max_price)}
+                  {formatPriceRangeLabel(user.min_price, user.max_price)}
                 </span>
               </div>
               <div className="flex items-center justify-between">
