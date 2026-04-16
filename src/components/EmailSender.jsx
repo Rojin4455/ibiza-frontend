@@ -4,8 +4,7 @@ import { Send, X, Loader2 } from 'lucide-react'
 import axiosInstance from '../axios/axiosInstance'
 import { toast } from 'sonner'
 
-export default function EmailSender({selectedProperties, userId}) {
-    console.log("selected properties: ", selectedProperties)
+export default function EmailSender({ selectedProperties, userId, onContactPatched }) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
@@ -16,12 +15,13 @@ export default function EmailSender({selectedProperties, userId}) {
     const selec_url = currentUrl.toString();
 
   const handleSendEmail = async () => {
+    if (!selectedProperties?.length) {
+      toast.error('Select at least one property to send.')
+      return
+    }
     const confirmSend = window.confirm("Are you sure you want to send the email?")
     if (confirmSend) {
       setLoading(true)
-      // send your message logic here
-      console.log("Message sent:", message)
-      
       try{
         const response = await axiosInstance.put(`accounts/contacts/${userId}`,{
             remarks:message,
@@ -29,7 +29,11 @@ export default function EmailSender({selectedProperties, userId}) {
             selec_url:selec_url
         })
         if(response.status === 200){
-            console.log("response success: ", response)
+            const data = response.data
+            onContactPatched?.({
+              properties: data.properties,
+              last_shared_property_ids: data.last_shared_property_ids,
+            })
             toast.success("Email sent successfully")
         }else{
             console.error("error response :", response)

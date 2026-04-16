@@ -193,7 +193,13 @@ function ContactTagsAndFilterSummary({ user }) {
   );
 }
 
-function UserProperties({ user }) {
+function isIdInList(propertyId, list) {
+  if (propertyId == null || !list?.length) return false;
+  const s = String(propertyId);
+  return list.some((x) => String(x) === s);
+}
+
+function UserProperties({ user, onContactPatched }) {
 
   const dispatch = useDispatch();
   const { accessLevel, locationId: accessLocationId } = useAccessControl();
@@ -205,16 +211,15 @@ function UserProperties({ user }) {
   const [selectOpen, setSelectOpen] = useState(null);
   const selection = (searchParams.get('selection') ?? 'false').toLowerCase();
   const isSelection = selection === 'true' || selection === '1' || selection === 'yes';
-  const [previousSelect, setPreviousSelect] = useState([])
-  
+  const allSharedPropertyIds = Array.isArray(user?.properties) ? user.properties : []
+  const lastSharedPropertyIds = Array.isArray(user?.last_shared_property_ids)
+    ? user.last_shared_property_ids
+    : []
 
   useEffect(() => {
-    const selected = properties
-    .filter(prop => user.properties.includes(prop.id))
-    .map(prop => prop.id)
-    setPreviousSelect(selected)
-    
-  },[properties, user])
+    if (isSelection) return;
+    setSelectedProperties((prev) => prev.filter((id) => !isIdInList(id, allSharedPropertyIds)));
+  }, [isSelection, user?.properties]);
 
   const observer = useRef();
   const lastPropertyElementRef = useCallback(node => {
@@ -318,22 +323,32 @@ function UserProperties({ user }) {
 
   // Handle property selection
   const togglePropertySelection = (propertyId) => {
-    setSelectedProperties(prev => {
-      if (prev.includes(propertyId)) {
-        return prev.filter(id => id !== propertyId);
-      } else {
-        return [...prev, propertyId];
+    if (!isSelection && isIdInList(propertyId, allSharedPropertyIds)) return;
+    setSelectedProperties((prev) => {
+      if (isIdInList(propertyId, prev)) {
+        return prev.filter((id) => String(id) !== String(propertyId));
       }
+      return [...prev, propertyId];
     });
   };
 
 
   // Select all properties
   const selectAllProperties = () => {
-    if (selectedProperties.length === properties.length) {
-      setSelectedProperties([]);
+    const selectable = properties
+      .filter((p) => !isIdInList(p.id, allSharedPropertyIds))
+      .map((p) => p.id);
+    if (selectable.length === 0) return;
+    const allSelectablePicked =
+      selectable.length > 0 && selectable.every((id) => isIdInList(id, selectedProperties));
+    if (allSelectablePicked) {
+      setSelectedProperties((prev) => prev.filter((id) => !isIdInList(id, selectable)));
     } else {
-      setSelectedProperties(properties.map(prop => prop.id));
+      setSelectedProperties((prev) => {
+        const next = new Set(prev);
+        selectable.forEach((id) => next.add(id));
+        return [...next];
+      });
     }
   };
 
@@ -343,20 +358,49 @@ function UserProperties({ user }) {
 
       {!isSelection && <ContactTagsAndFilterSummary user={user} />}
 
+      {!isSelection && (
+        <p className="text-xs text-gray-600 mb-3 rounded-md border border-emerald-100 bg-emerald-50/60 px-3 py-2">
+          <span className="font-semibold text-emerald-900">Already sent</span> and{' '}
+          <span className="font-semibold text-amber-900">Latest send</span> match the customer link. Listings already emailed have a{' '}
+          <span className="font-medium">locked checkbox</span> — choose new ones for the next send.
+        </p>
+      )}
+
         {!noSelect && !loading &&(
-      <EmailSender selectedProperties={selectedProperties} userId={user.id}/>
+      <EmailSender
+        selectedProperties={selectedProperties}
+        userId={user.id}
+        onContactPatched={(patch) => {
+          onContactPatched?.(patch)
+          setSelectedProperties([])
+        }}
+      />
     )}
       
+      {isSelection && (
+        <p className="text-sm text-gray-600 mb-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+          <span className="font-medium text-gray-800">Latest email</span> highlights properties from the most recent send;{' '}
+          <span className="font-medium text-sky-800">Earlier share</span> marks listings shared on a previous send. All of them stay on this page.
+        </p>
+      )}
+
       {!isSelection && (
       <div className="flex justify-between items-center mb-2">
         <span className="font-medium">Property List</span>
         <div className="flex items-center gap-4">
           <span className="text-gray-600 text-sm">Showing {properties.length} of {totalCount || 0} properties</span>
           <button
+            type="button"
             onClick={selectAllProperties}
             className="text-sm text-primary hover:text-primaryhover"
           >
-            {selectedProperties.length === properties.length ? 'Deselect All' : 'Select All'}
+            {(() => {
+              const selectable = properties.filter((p) => !isIdInList(p.id, allSharedPropertyIds));
+              const allPicked =
+                selectable.length > 0 &&
+                selectable.every((id) => isIdInList(id, selectedProperties));
+              return allPicked ? 'Deselect All' : 'Select All';
+            })()}
           </button>
         </div>
       </div>
@@ -376,9 +420,9 @@ function UserProperties({ user }) {
                     selectedProperties={selectedProperties}
                     lastPropertyElementRef={isLastElement ? lastPropertyElementRef : null}
                     noSelect={noSelect}
-                    user={user}
                     isSelection={isSelection}
-                    previousSelect={previousSelect}
+                    allSharedPropertyIds={allSharedPropertyIds}
+                    lastSharedPropertyIds={lastSharedPropertyIds}
                   />
                 );
               })}

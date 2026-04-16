@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Users, UserPlus, Activity, Search, Loader2, Filter } from 'lucide-react';
+import { Users, UserPlus, Activity, Search, Loader2, Filter, Trash2 } from 'lucide-react';
 import axiosInstance from '../axios/axiosInstance';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAccessControl } from '../customHooks/useAccessControl';
@@ -55,6 +55,7 @@ export default function Dashboard() {
   const [priceMax, setPriceMax] = useState('');
   const [propertyTypeFilter, setPropertyTypeFilter] = useState('');
   const [contactsLoading, setContactsLoading] = useState(false);
+  const [deletingContactId, setDeletingContactId] = useState(null);
 
   const getContactsUrl = (pageUrl = null) => {
     if (pageUrl) return pageUrl;
@@ -160,6 +161,31 @@ export default function Dashboard() {
 
   const handleViewUser = async (user) => {
     navigate(`/user-properties/${user.contact.id}?locationId=${locationId}`)
+  }
+
+  const handleDeactivateContact = async (user) => {
+    const name =
+      [user.contact.first_name, user.contact.last_name].filter(Boolean).join(' ').trim() ||
+      user.contact.email ||
+      'this contact'
+    if (
+      !window.confirm(
+        `Remove "${name}" from this list? They will be marked inactive and will not appear in the leads list anymore.`
+      )
+    ) {
+      return
+    }
+    setDeletingContactId(user.contact.id)
+    try {
+      await axiosInstance.delete(`accounts/contacts/${user.contact.id}`)
+      setUsers((prev) => prev.filter((u) => u.contact.id !== user.contact.id))
+      setTotalCount((c) => Math.max(0, c - 1))
+    } catch (error) {
+      console.error(error)
+      window.alert('Could not remove this contact. Please try again.')
+    } finally {
+      setDeletingContactId(null)
+    }
   }
 
   // Contacts are now filtered by the backend via search param; display API results directly
@@ -508,16 +534,28 @@ const usersLastWeek = users.filter(user => new Date(user.contact.date_added) >= 
                     </div>
                   </td> */}
                   <td className="px-6 py-4 whitespace-nowrap text-center">
-                    <button
-                      onClick={() => handleViewUser(user)}
-                      className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg text-white bg-gradient-to-r from-primary to-primaryhover hover:from-primaryhover hover:to-primary transform hover:scale-105 transition-all duration-200 shadow-sm"
-                    >
-                      <svg className="w-4 h-4 mr-1" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
-                        <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                        <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                      </svg>
-                      Details
-                    </button>
+                    <div className="inline-flex flex-wrap items-center justify-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleViewUser(user)}
+                        className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg text-white bg-gradient-to-r from-primary to-primaryhover hover:from-primaryhover hover:to-primary transform hover:scale-105 transition-all duration-200 shadow-sm"
+                      >
+                        <svg className="w-4 h-4 mr-1" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
+                          <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                          <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                        </svg>
+                        Details
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeactivateContact(user)}
+                        disabled={contactsLoading || deletingContactId === user.contact.id}
+                        className="inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg text-red-700 bg-red-50 ring-1 ring-red-200 hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4 mr-1 shrink-0" aria-hidden />
+                        Remove
+                      </button>
+                    </div>
                   </td>
                 </tr>
               );
@@ -557,26 +595,38 @@ const usersLastWeek = users.filter(user => new Date(user.contact.date_added) >= 
 
             return (
               <div key={user.contact.id} className="p-6 hover:bg-gray-50 transition-colors duration-200">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center">
-                    <div className="h-12 w-12 rounded-full bg-gradient-to-br from-primary to-primaryhover flex items-center justify-center text-white font-bold text-lg">
+                <div className="flex items-center justify-between mb-4 gap-2">
+                  <div className="flex items-center min-w-0">
+                    <div className="h-12 w-12 rounded-full bg-gradient-to-br from-primary to-primaryhover flex items-center justify-center text-white font-bold text-lg shrink-0">
                       {user.contact.first_name?.charAt(0).toUpperCase() || 'U'}
                     </div>
-                    <div className="ml-4">
-                      <h3 className="text-lg font-semibold text-gray-900 capitalize">
+                    <div className="ml-4 min-w-0">
+                      <h3 className="text-lg font-semibold text-gray-900 capitalize truncate">
                         {user.contact.first_name || 'N/A'}
                       </h3>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-gray-600 truncate">
                         {user.contact.email || 'No Email'}
                       </p>
                     </div>
                   </div>
-                  <button
-                    onClick={() => handleViewUser(user)}
-                    className="px-4 py-2 text-sm font-medium rounded-lg text-white bg-gradient-to-r from-primary to-primaryhover shadow-sm"
-                  >
-                    Details
-                  </button>
+                  <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => handleViewUser(user)}
+                      className="px-4 py-2 text-sm font-medium rounded-lg text-white bg-gradient-to-r from-primary to-primaryhover shadow-sm"
+                    >
+                      Details
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeactivateContact(user)}
+                      disabled={contactsLoading || deletingContactId === user.contact.id}
+                      className="inline-flex items-center justify-center px-3 py-2 text-sm font-medium rounded-lg text-red-700 bg-red-50 ring-1 ring-red-200 hover:bg-red-100 disabled:opacity-50"
+                    >
+                      <Trash2 className="w-4 h-4 mr-1 shrink-0" aria-hidden />
+                      Remove
+                    </button>
+                  </div>
                 </div>
 
                 <div className="mt-3">
